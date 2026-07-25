@@ -1,668 +1,980 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="referrer" content="no-referrer-when-downgrade">
-    <title>V-win by A5xi</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Axi-Music Player</title>
+  <style>
+    :root {
+      --bg-dark: #0a0a0a;
+      --card-bg: #141414;
+      --accent-red: #ff1e27;
+      --accent-red-hover: #d90f17;
+      --text-main: #ffffff;
+      --text-muted: #aaaaaa;
+      --border-color: #262626;
+      --item-bg: #1f1f1f;
+      --item-hover: #2a2a2a;
+    }
 
-        :root {
-            --bg-color: #0f0f0f;
-            --card-bg: #1f1f1f;
-            --panel-bg: #282828;
-            --accent-color: #ff0000;
-            --accent-hover: #cc0000;
-            --text-color: #f1f1f1;
-            --text-dim: #9a9a9a;
-            --input-bg: #3c3c3c;
-            --border-subtle: rgba(255, 255, 255, 0.08);
-            --shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-            --video-aspect: 9 / 16;
-        }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        html, body {
-            height: 100%;
-        }
+    body {
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+      position: relative;
+      overflow-x: hidden;
+    }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-        }
+    /* ==========================================================
+       SECRET CODE ACCESS SCREEN STYLES
+    ========================================================== */
+    .access-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(10, 10, 10, 0.96);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      opacity: 1;
+      visibility: visible;
+      transition: opacity 0.5s ease, visibility 0.5s ease, transform 0.5s ease;
+    }
 
-        /* ============ SECRET CODE GATE ============ */
-        #gateOverlay {
-            position: fixed;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            background:
-                radial-gradient(circle at 20% 15%, rgba(255, 0, 0, 0.08) 0%, transparent 45%),
-                radial-gradient(circle at 80% 85%, rgba(255, 0, 0, 0.06) 0%, transparent 45%),
-                radial-gradient(circle at 50% 50%, #161616 0%, #0a0a0a 75%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 999;
-            padding: 1.5rem;
-            opacity: 1;
-            transition: opacity 0.25s ease;
-        }
+    .access-overlay.unlocked {
+      opacity: 0;
+      visibility: hidden;
+      transform: scale(1.05);
+      pointer-events: none;
+    }
 
-        #gateOverlay.gate-hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
+    .access-card {
+      background: linear-gradient(145deg, #181818, #111111);
+      width: 90%;
+      max-width: 400px;
+      padding: 36px 28px;
+      border-radius: 24px;
+      border: 1px solid rgba(255, 30, 39, 0.25);
+      box-shadow: 0 15px 35px rgba(255, 30, 39, 0.2), 0 30px 60px rgba(0, 0, 0, 0.9);
+      text-align: center;
+      animation: cardAppear 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
 
-        .gate-card {
-            background-color: var(--panel-bg);
-            border: 1px solid var(--border-subtle);
-            border-radius: 20px;
-            padding: 2.75rem 2.25rem;
-            width: 100%;
-            max-width: 380px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
-            text-align: center;
-            animation: gate-rise 0.45s ease;
-        }
+    @keyframes cardAppear {
+      from { opacity: 0; transform: translateY(20px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
 
-        @keyframes gate-rise {
-            from { opacity: 0; transform: translateY(14px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+    .lock-icon-wrapper {
+      width: 64px;
+      height: 64px;
+      background: rgba(255, 30, 39, 0.1);
+      border: 1px solid var(--accent-red);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 18px;
+      color: var(--accent-red);
+      box-shadow: 0 0 20px rgba(255, 30, 39, 0.3);
+    }
 
-        .gate-card.shake {
-            animation: gate-shake 0.4s ease;
-        }
+    .access-card h3 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+    }
 
-        @keyframes gate-shake {
-            10%, 90% { transform: translateX(-2px); }
-            20%, 80% { transform: translateX(4px); }
-            30%, 50%, 70% { transform: translateX(-7px); }
-            40%, 60% { transform: translateX(7px); }
-        }
+    .access-card p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
 
-        .gate-icon {
-            width: 56px;
-            height: 56px;
-            margin: 0 auto 1.4rem;
-            border-radius: 50%;
-            background: rgba(255, 0, 0, 0.12);
-            border: 1px solid rgba(255, 0, 0, 0.25);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+    .pin-input-box {
+      margin-bottom: 16px;
+      position: relative;
+    }
 
-        .gate-icon svg {
-            width: 22px;
-            height: 22px;
-            stroke: var(--accent-color);
-        }
+    .pin-input-box input {
+      width: 100%;
+      padding: 14px 18px;
+      background-color: #0d0d0d;
+      border: 2px solid var(--border-color);
+      border-radius: 14px;
+      color: var(--text-main);
+      font-size: 18px;
+      text-align: center;
+      letter-spacing: 6px;
+      outline: none;
+      transition: all 0.25s ease;
+    }
 
-        .gate-card h2 {
-            font-size: 1.3rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            letter-spacing: -0.3px;
-        }
+    .pin-input-box input:focus {
+      border-color: var(--accent-red);
+      box-shadow: 0 0 15px rgba(255, 30, 39, 0.35);
+      background-color: #121212;
+    }
 
-        .gate-card p {
-            font-size: 0.88rem;
-            color: var(--text-dim);
-            margin-bottom: 1.75rem;
-            line-height: 1.5;
-        }
+    .pin-input-box input::placeholder {
+      letter-spacing: 1px;
+      font-size: 13px;
+      color: #555;
+    }
 
-        .gate-input-wrap {
-            position: relative;
-        }
+    .unlock-btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      background: linear-gradient(135deg, #ff1e27, #b30007);
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      border-radius: 14px;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(255, 30, 39, 0.4);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
 
-        .gate-card input {
-            width: 100%;
-            background-color: var(--input-bg);
-            color: var(--text-color);
-            border: 1px solid var(--border-subtle);
-            padding: 0.9rem 2.8rem 0.9rem 1rem;
-            border-radius: 10px;
-            font-size: 1rem;
-            outline: none;
-            text-align: center;
-            letter-spacing: 3px;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
+    .unlock-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255, 30, 39, 0.6);
+    }
 
-        .gate-card input:focus {
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 3px rgba(255, 0, 0, 0.15);
-        }
+    .unlock-btn:active {
+      transform: translateY(0);
+    }
 
-        .gate-toggle-visibility {
-            position: absolute;
-            right: 0.6rem;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: var(--text-dim);
-            cursor: pointer;
-            font-size: 0.75rem;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            padding: 0.4rem 0.5rem;
-            border-radius: 6px;
-            transition: color 0.2s, background 0.2s;
-        }
+    .error-msg {
+      font-size: 12px;
+      color: #ff4d4d;
+      margin-top: 12px;
+      min-height: 18px;
+      font-weight: 500;
+      transition: opacity 0.2s;
+    }
 
-        .gate-toggle-visibility:hover {
-            color: var(--text-color);
-            background: rgba(255, 255, 255, 0.06);
-        }
+    /* Shake animation on wrong code */
+    .shake {
+      animation: shakeAnim 0.4s ease-in-out;
+    }
 
-        .gate-error {
-            color: var(--accent-color);
-            font-size: 0.82rem;
-            margin-top: 0.75rem;
-            min-height: 1.1rem;
-            font-weight: 500;
-        }
+    @keyframes shakeAnim {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px); }
+      40%, 80% { transform: translateX(8px); }
+    }
 
-        .gate-submit {
-            width: 100%;
-            margin-top: 1.4rem;
-            background-color: var(--accent-color);
-            color: white;
-            border: none;
-            padding: 0.9rem;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: background 0.2s, transform 0.1s;
-        }
+    /* ==========================================================
+       MAIN APP STYLES
+    ========================================================== */
+    .player-card {
+      background-color: var(--card-bg);
+      width: 100%;
+      max-width: 480px;
+      padding: 28px 22px 16px 22px;
+      border-radius: 20px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 10px 30px rgba(255, 30, 39, 0.15), 0 20px 40px rgba(0, 0, 0, 0.8);
+      position: relative;
+    }
 
-        .gate-submit:hover {
-            background-color: var(--accent-hover);
-        }
+    .brand-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
 
-        .gate-submit:active {
-            transform: scale(0.98);
-        }
+    .brand-logo {
+      width: 12px;
+      height: 12px;
+      background-color: var(--accent-red);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--accent-red);
+    }
 
-        .gate-footnote {
-            margin-top: 1.5rem;
-            font-size: 0.72rem;
-            color: #666;
-            letter-spacing: 0.3px;
-        }
+    h2 {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--text-main);
+      text-align: center;
+    }
 
-        /* ============ MAIN APP ============ */
-        #appRoot {
-            display: none;
-            width: 100%;
-            flex-direction: column;
-            align-items: center;
-            padding: 2rem 1rem 6rem;
-        }
+    .subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 18px;
+      text-align: center;
+    }
 
-        #appRoot.unlocked {
-            display: flex;
-        }
+    /* Tabs Bar */
+    .tabs-bar {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 16px;
+      background: #181818;
+      padding: 4px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+    }
 
-        /* ============ CONTROL PANEL ============ */
-        .control-panel {
-            background-color: var(--panel-bg);
-            padding: 1.75rem;
-            border-radius: 18px;
-            width: 100%;
-            max-width: 800px;
-            box-shadow: var(--shadow);
-            margin-bottom: 2.5rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-            border: 1px solid var(--border-subtle);
-        }
+    .tab-btn {
+      flex: 1;
+      padding: 8px 0;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
 
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.6rem;
-        }
+    .tab-btn.active {
+      background-color: var(--accent-red);
+      color: var(--text-main);
+    }
 
-        .form-group label {
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
-            color: var(--text-dim);
-        }
+    /* Search Bar & Auto-Suggestions */
+    .search-container {
+      position: relative;
+      margin-bottom: 14px;
+    }
 
-        .segmented {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            background-color: var(--input-bg);
-            border-radius: 10px;
-            padding: 4px;
-            gap: 4px;
-        }
+    .search-box {
+      display: flex;
+      background-color: var(--item-bg);
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
 
-        .segmented input {
-            display: none;
-        }
+    .search-box:focus-within {
+      border-color: var(--accent-red);
+      box-shadow: 0 0 12px rgba(255, 30, 39, 0.3);
+    }
 
-        .segmented label {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.4rem;
-            padding: 0.7rem 0.5rem;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            text-transform: none;
-            letter-spacing: normal;
-            color: var(--text-dim);
-            cursor: pointer;
-            transition: background 0.2s, color 0.2s;
-            user-select: none;
-        }
+    .search-box input {
+      flex: 1;
+      padding: 12px 14px;
+      border: none;
+      background: transparent;
+      color: var(--text-main);
+      font-size: 14px;
+      outline: none;
+    }
 
-        .segmented input:checked + label {
-            background-color: var(--accent-color);
-            color: #fff;
-        }
+    .search-box button {
+      padding: 0 18px;
+      border: none;
+      background-color: var(--accent-red);
+      color: var(--text-main);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
 
-        .row-controls {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
+    .search-box button:hover {
+      background-color: var(--accent-red-hover);
+    }
 
-        .stepper-btn {
-            width: 42px;
-            height: 42px;
-            flex-shrink: 0;
-            background-color: var(--input-bg);
-            border: 1px solid var(--border-subtle);
-            color: var(--text-color);
-            border-radius: 8px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.2s;
-        }
+    /* Live Suggestion Dropdown */
+    .suggestions-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background-color: #1a1a1a;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      margin-top: 5px;
+      max-height: 180px;
+      overflow-y: auto;
+      z-index: 100;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.8);
+      display: none;
+    }
 
-        .stepper-btn:hover {
-            background-color: #4a4a4a;
-        }
+    .suggestion-item {
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #ddd;
+      cursor: pointer;
+      border-bottom: 1px solid #222;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
 
-        #rowCount {
-            flex: 1;
-            text-align: center;
-            background-color: var(--input-bg);
-            color: var(--text-color);
-            border: 1px solid var(--border-subtle);
-            padding: 0.75rem;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            outline: none;
-        }
+    .suggestion-item:hover {
+      background-color: var(--accent-red);
+      color: #fff;
+    }
 
-        .row-hint {
-            font-size: 0.75rem;
-            color: var(--text-dim);
-        }
+    .suggestion-item .artist-tag {
+      font-size: 11px;
+      opacity: 0.7;
+    }
 
-        .form-group input[type="text"] {
-            background-color: var(--input-bg);
-            color: var(--text-color);
-            border: 1px solid var(--border-subtle);
-            padding: 0.8rem 1rem;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            outline: none;
-            transition: border-color 0.2s;
-        }
+    /* Quick Chips */
+    .rec-chips {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 16px;
+    }
 
-        .form-group input[type="text"]:focus {
-            border-color: var(--accent-color);
-        }
+    .rec-chips::-webkit-scrollbar { display: none; }
 
-        .link-status {
-            font-size: 0.75rem;
-            color: var(--text-dim);
-            min-height: 1rem;
-        }
+    .chip {
+      background: var(--item-bg);
+      border: 1px solid var(--border-color);
+      color: #ccc;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: 0.2s;
+    }
 
-        .link-status.valid {
-            color: #4caf50;
-        }
+    .chip:hover {
+      border-color: var(--accent-red);
+      color: var(--accent-red);
+    }
 
-        .link-status.invalid {
-            color: var(--accent-color);
-        }
+    /* Track List with Album Art Covers */
+    .results-list {
+      list-style: none;
+      max-height: 230px;
+      overflow-y: auto;
+      margin-bottom: 16px;
+      padding-right: 4px;
+    }
 
-        .btn-submit {
-            background-color: var(--accent-color);
-            color: white;
-            border: none;
-            padding: 0.9rem;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background 0.2s, transform 0.1s;
-        }
+    .results-list::-webkit-scrollbar { width: 5px; }
+    .results-list::-webkit-scrollbar-thumb {
+      background: #333333;
+      border-radius: 3px;
+    }
 
-        .btn-submit:hover {
-            background-color: var(--accent-hover);
-        }
+    .track-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px;
+      background-color: var(--item-bg);
+      border: 1px solid transparent;
+      margin-bottom: 8px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
 
-        h1 {
-            font-size: 1.5rem;
-            margin-bottom: 1.5rem;
-            font-weight: 600;
-            letter-spacing: -0.5px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            width: 100%;
-            max-width: 1400px;
-        }
+    .track-item:hover {
+      background-color: var(--item-hover);
+      border-color: #333333;
+    }
 
-        h1::before {
-            content: "";
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            background-color: var(--accent-color);
-            border-radius: 50%;
-        }
+    .track-item.active {
+      background-color: #251213;
+      border: 1px solid var(--accent-red);
+    }
 
-        .shorts-container {
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 1rem;
-            width: 100%;
-            max-width: 1400px;
-            margin-bottom: 2rem;
-        }
+    .track-item img {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
 
-        .video-card {
-            position: relative;
-            background: var(--card-bg);
-            border-radius: 14px;
-            overflow: hidden;
-            box-shadow: var(--shadow);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            border: 1px solid var(--border-subtle);
-            width: 100%;
-            aspect-ratio: var(--video-aspect);
-        }
+    .track-info { flex: 1; overflow: hidden; text-align: left; }
 
-        .video-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 30px rgba(255, 0, 0, 0.15);
-            border-color: rgba(255, 0, 0, 0.3);
-        }
+    .track-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
 
-        .video-card iframe {
-            width: 100%;
-            height: 100%;
-            display: block;
-            border: none;
-        }
+    .track-artist {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
 
-        .empty-state {
-            width: 100%;
-            max-width: 1400px;
-            text-align: center;
-            padding: 4rem 1rem;
-            color: var(--text-dim);
-            font-size: 0.95rem;
-            line-height: 1.9;
-            background-color: var(--card-bg);
-            border: 1px dashed var(--border-subtle);
-            border-radius: 16px;
-        }
+    .fav-btn {
+      background: none;
+      border: none;
+      color: #666;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 5px;
+    }
 
-        .site-footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            text-align: center;
-            padding: 0.9rem;
-            background: linear-gradient(to top, rgba(15,15,15,0.95), rgba(15,15,15,0));
-            font-size: 0.85rem;
-            color: var(--text-dim);
-            letter-spacing: 0.3px;
-            z-index: 50;
-        }
+    .fav-btn.active, .fav-btn:hover { color: var(--accent-red); }
 
-        .site-footer strong {
-            color: var(--text-color);
-        }
+    /* Controls */
+    .custom-player-controls {
+      background-color: #121212;
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
 
-        @media (max-width: 1100px) {
-            .shorts-container { grid-template-columns: repeat(4, 1fr); }
-        }
+    .control-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 12px;
+    }
 
-        @media (max-width: 900px) {
-            .shorts-container { grid-template-columns: repeat(3, 1fr); }
-        }
+    .btn-circle {
+      background: #1f1f1f;
+      border: 1px solid #333;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #ffffff;
+      transition: all 0.2s ease;
+    }
 
-        @media (max-width: 600px) {
-            .shorts-container { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
-            h1 { font-size: 1.2rem; }
-            .control-panel { padding: 1.25rem; }
-        }
-    </style>
+    .btn-circle:hover {
+      border-color: var(--accent-red);
+      color: var(--accent-red);
+    }
+
+    .btn-play-pause {
+      background-color: var(--accent-red);
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(255, 30, 39, 0.4);
+      transition: transform 0.2s, background-color 0.2s;
+    }
+
+    .btn-play-pause:hover {
+      transform: scale(1.05);
+      background-color: var(--accent-red-hover);
+    }
+
+    .progress-bar-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .progress-bar {
+      flex: 1;
+      height: 4px;
+      background: #333333;
+      border-radius: 2px;
+      outline: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+    }
+
+    .progress-bar::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--accent-red);
+      cursor: pointer;
+    }
+
+    audio { display: none; }
+
+    .player-footer {
+      border-top: 1px solid var(--border-color);
+      padding-top: 12px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+    }
+
+    .player-footer span {
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    .loading-spinner {
+      text-align: center;
+      padding: 20px;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+  </style>
 </head>
 <body>
 
-    <!-- ============ SECRET CODE GATE ============ -->
-    <div id="gateOverlay">
-        <div class="gate-card">
-            <div class="gate-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="4" y="11" width="16" height="10" rx="2"></rect>
-                    <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
-                </svg>
-            </div>
-            <h2>Enter Secret Code</h2>
-            <p>This feed generator is private. Enter the access code to continue.</p>
-            <div class="gate-input-wrap">
-                <input type="password" id="secretCodeInput" placeholder="Secret code" autocomplete="off">
-                <button type="button" class="gate-toggle-visibility" id="toggleVisibility" onclick="toggleCodeVisibility()">SHOW</button>
-            </div>
-            <div class="gate-error" id="gateError"></div>
-            <button class="gate-submit" onclick="checkSecretCode()">Unlock</button>
-            <div class="gate-footnote">Access is restricted to authorized users only.</div>
-        </div>
+  <!-- ==========================================================
+       SECRET CODE ENTRY SCREEN OVERLAY
+  ========================================================== -->
+  <div class="access-overlay" id="access-overlay">
+    <div class="access-card" id="access-card">
+      <div class="lock-icon-wrapper">
+        <svg width="26" height="26" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+        </svg>
+      </div>
+      <h3>Protected Access</h3>
+      <p>Enter the secret passcode to unlock Axi Music</p>
+      
+      <div class="pin-input-box">
+        <input type="password" id="secret-passcode" placeholder="ENTER CODE" maxlength="10" autocomplete="off" autofocus />
+      </div>
+      
+      <button class="unlock-btn" id="unlock-btn">UNLOCK PLAYER</button>
+      <div class="error-msg" id="error-msg"></div>
+    </div>
+  </div>
+
+  <!-- ==========================================================
+       MAIN PLAYER CONTENT
+  ========================================================== -->
+  <div class="player-card">
+    <div class="brand-header">
+      <div class="brand-logo"></div>
+      <h2>A - S O N G S </h2>
+    </div>
+    <div class="subtitle">Pure Hindi Experience (Instant Stream Engine)</div>
+
+    <!-- Navigation Tabs -->
+    <div class="tabs-bar">
+      <button class="tab-btn active" id="tab-search" onclick="switchTab('search')">🔍 Hindi Songs</button>
+      <button class="tab-btn" id="tab-mixes" onclick="switchTab('mixes')">📻 Long Mixes</button>
+      <button class="tab-btn" id="tab-favs" onclick="switchTab('favs')">❤️ Favorites</button>
     </div>
 
-    <!-- ============ MAIN APP ============ -->
-    <div id="appRoot">
-
-        <div class="control-panel">
-            <div class="form-group">
-                <label>Content Type</label>
-                <div class="segmented">
-                    <input type="radio" name="contentType" id="typeShort" value="short" checked>
-                    <label for="typeShort">Short Video</label>
-                    <input type="radio" name="contentType" id="typeVideo" value="video">
-                    <label for="typeVideo">YouTube Video</label>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="rowCount">Number of Rows (1–8)</label>
-                <div class="row-controls">
-                    <button type="button" class="stepper-btn" onclick="stepRows(-1)">−</button>
-                    <input type="number" id="rowCount" value="2" min="1" max="8" step="1" inputmode="numeric">
-                    <button type="button" class="stepper-btn" onclick="stepRows(1)">+</button>
-                </div>
-                <div class="row-hint">6 videos per row · min 1, max 8 rows</div>
-            </div>
-
-            <div class="form-group">
-                <label for="youtubeLink">YouTube URL / Share Link</label>
-                <input type="text" id="youtubeLink" placeholder="Paste a YouTube link, e.g. https://youtu.be/..." value="" oninput="validateLinkInput()">
-                <div class="link-status" id="linkStatus"></div>
-            </div>
-
-            <button class="btn-submit" onclick="generateFeed()">Generate Video Feed</button>
+    <!-- Search Section -->
+    <div id="search-section">
+      <div class="search-container">
+        <div class="search-box">
+          <input type="text" id="search-input" placeholder="Search song name..." autocomplete="off" />
+          <button id="search-btn">Search</button>
         </div>
+        <!-- Live Suggestions Dropdown -->
+        <div class="suggestions-dropdown" id="suggestions-box"></div>
+      </div>
 
-        <h1 id="feedTitle">Live Viral by A5xi</h1>
-        <div class="shorts-container" id="gridContainer"></div>
+      <!-- Quick Category Chips -->
+      <div class="rec-chips">
+        <span class="chip" onclick="quickSearch('Zalim')">🔥 Zalim</span>
+        <span class="chip" onclick="quickSearch('Lag Ja Gale')">🌹 Lag Ja Gale</span>
+        <span class="chip" onclick="quickSearch('Apna Bana Le')">✨ Apna Bana Le</span>
+        <span class="chip" onclick="quickSearch('Arijit Singh')">🎤 Arijit Singh</span>
+        <span class="chip" onclick="quickSearch('Tum Se Hi')">❤️ Tum Se Hi</span>
+      </div>
     </div>
 
-    <div class="site-footer">Powered by <strong>@a5hvnxi</strong></div>
+    <!-- Song List Display -->
+    <ul class="results-list" id="results-list"></ul>
 
-    <script>
-        const ACCESS_CODE = "A5vn";
+    <!-- Controls -->
+    <div class="custom-player-controls">
+      <div class="control-row">
+        <button class="btn-circle" onclick="prevSong()">
+          <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M11 3.5a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0V4a.5.5 0 0 1 .5-.5zm-6 0a.5.5 0 0 1 .5.5v3.793l4.146-4.147a.5.5 0 0 1 .708.708L6.207 8l4.147 4.146a.5.5 0 0 1-.708.708L5.5 8.707V12a.5.5 0 0 1-1 0V4a.5.5 0 0 1 .5-.5z"/></svg>
+        </button>
+        
+        <button class="btn-play-pause" id="play-btn" onclick="togglePlay()">
+          <svg id="play-icon" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/></svg>
+        </button>
+        
+        <button class="btn-circle" onclick="nextSong()">
+          <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5 3.5a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 1 0V4a.5.5 0 0 0-.5-.5zm6 0a.5.5 0 0 0-.5.5v3.793L6.354 3.646a.5.5 0 1 0-.708.708L9.793 8l-4.147 4.146a.5.5 0 0 0 .708.708L10.5 8.707V12a.5.5 0 0 0 1 0V4a.5.5 0 0 0-.5-.5z"/></svg>
+        </button>
+      </div>
 
-        function toggleCodeVisibility() {
-            const input = document.getElementById('secretCodeInput');
-            const btn = document.getElementById('toggleVisibility');
-            if (input.type === 'password') {
-                input.type = 'text';
-                btn.textContent = 'HIDE';
-            } else {
-                input.type = 'password';
-                btn.textContent = 'SHOW';
-            }
+      <div class="progress-bar-container">
+        <span id="current-time">0:00</span>
+        <input type="range" class="progress-bar" id="seek-bar" value="0" max="100">
+        <span id="total-time">0:00</span>
+      </div>
+
+      <audio id="audio-player"></audio>
+    </div>
+
+    <!-- Centered Footer Section -->
+    <div class="player-footer">
+      Songs Powered by <span>A5vnxi</span>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // SECRET PASSCODE SYSTEM
+    // ==========================================
+    const CORRECT_CODE = "A5vn"; // Set your secret code here!
+
+    const overlay = document.getElementById('access-overlay');
+    const accessCard = document.getElementById('access-card');
+    const passcodeBtn = document.getElementById('unlock-btn');
+    const passcodeInput = document.getElementById('secret-passcode');
+    const errorMsg = document.getElementById('error-msg');
+
+    function checkPasscode() {
+      const enteredCode = passcodeInput.value.trim();
+      
+      if (enteredCode === CORRECT_CODE) {
+        errorMsg.textContent = "";
+        overlay.classList.add('unlocked');
+        // Initial music load after unlocking
+        fetchHindiSongs("Zalim");
+      } else {
+        errorMsg.textContent = "Incorrect passcode! Try again.";
+        accessCard.classList.remove('shake');
+        void accessCard.offsetWidth; // Trigger reflow
+        accessCard.classList.add('shake');
+        passcodeInput.value = "";
+        passcodeInput.focus();
+      }
+    }
+
+    passcodeBtn.addEventListener('click', checkPasscode);
+    passcodeInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') checkPasscode();
+    });
+
+    // ==========================================
+    // MAIN MUSIC PLAYER SYSTEM
+    // ==========================================
+    const API_JIOSAAVN = "https://saavn.sumit.co/api/search/songs?query=";
+    const API_ITUNES = "https://itunes.apple.com/search?media=music&entity=song&term=";
+
+    const longMixPlaylists = [
+      { id: "mix1", title: "Bollywood Romantic Mashup", artist: "Non-Stop Hindi Mix", streamUrl: "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3", artwork: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=100" },
+      { id: "mix2", title: "Arijit Singh Melodies", artist: "Arijit Hit Collection", streamUrl: "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3", artwork: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=100" },
+      { id: "mix3", title: "Hindi Midnight Lo-Fi", artist: "Chill Chillout Mix", streamUrl: "https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3", artwork: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=100" }
+    ];
+
+    let currentTracks = [];
+    let currentTrackIndex = 0;
+    let favoritesList = JSON.parse(localStorage.getItem('redmusic_favs_v9') || '[]');
+    let currentTab = 'search';
+    let suggestionDebounce = null;
+
+    const searchInput = document.getElementById('search-input');
+    const searchBtn = document.getElementById('search-btn');
+    const suggestionsBox = document.getElementById('suggestions-box');
+    const resultsList = document.getElementById('results-list');
+    const audioPlayer = document.getElementById('audio-player');
+    const playIcon = document.getElementById('play-icon');
+    const seekBar = document.getElementById('seek-bar');
+    const currentTimeEl = document.getElementById('current-time');
+    const totalTimeEl = document.getElementById('total-time');
+
+    function switchTab(tab) {
+      currentTab = tab;
+      document.getElementById('tab-search').classList.toggle('active', tab === 'search');
+      document.getElementById('tab-mixes').classList.toggle('active', tab === 'mixes');
+      document.getElementById('tab-favs').classList.toggle('active', tab === 'favs');
+
+      document.getElementById('search-section').style.display = tab === 'search' ? 'block' : 'none';
+      suggestionsBox.style.display = 'none';
+
+      if (tab === 'mixes') {
+        currentTracks = longMixPlaylists;
+        renderTrackList(currentTracks);
+      } else if (tab === 'favs') {
+        renderFavorites();
+      } else {
+        if (currentTracks.length === 0) {
+          fetchHindiSongs("Zalim");
+        } else {
+          renderTrackList(currentTracks);
         }
+      }
+    }
 
-        window.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('secretCodeInput').focus();
+    function quickSearch(term) {
+      searchInput.value = term;
+      suggestionsBox.style.display = 'none';
+      fetchHindiSongs(term);
+    }
+
+    searchInput.addEventListener('input', (e) => {
+      const query = e.target.value.trim();
+      clearTimeout(suggestionDebounce);
+
+      if (query.length < 2) {
+        suggestionsBox.style.display = 'none';
+        return;
+      }
+
+      suggestionDebounce = setTimeout(() => {
+        fetchSuggestions(query);
+      }, 250);
+    });
+
+    async function fetchSuggestions(query) {
+      try {
+        const res = await fetch(`${API_JIOSAAVN}${encodeURIComponent(query)}`);
+        const data = await res.json();
+        
+        if (data && data.data && data.data.results && data.data.results.length > 0) {
+          renderSuggestions(data.data.results.slice(0, 5));
+        } else {
+          suggestionsBox.style.display = 'none';
+        }
+      } catch (e) {
+        suggestionsBox.style.display = 'none';
+      }
+    }
+
+    function renderSuggestions(list) {
+      suggestionsBox.innerHTML = '';
+      list.forEach(item => {
+        const title = item.name ? item.name.replace(/&quot;/g, '"').replace(/&#039;/g, "'") : '';
+        const artist = item.artists && item.artists.primary && item.artists.primary[0] ? item.artists.primary[0].name : '';
+
+        const div = document.createElement('div');
+        div.className = 'suggestion-item';
+        div.innerHTML = `<span>🎵 ${title}</span> <span class="artist-tag">${artist}</span>`;
+        div.addEventListener('click', () => {
+          searchInput.value = title;
+          suggestionsBox.style.display = 'none';
+          fetchHindiSongs(title);
+        });
+        suggestionsBox.appendChild(div);
+      });
+      suggestionsBox.style.display = 'block';
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+        suggestionsBox.style.display = 'none';
+      }
+    });
+
+    async function fetchHindiSongs(query) {
+      if (!query.trim()) return;
+      suggestionsBox.style.display = 'none';
+      resultsList.innerHTML = '<div class="loading-spinner">⚡ Searching for songs...</div>';
+
+      try {
+        const res = await fetch(`${API_JIOSAAVN}${encodeURIComponent(query)}`);
+        const data = await res.json();
+        
+        if (data && data.data && data.data.results && data.data.results.length > 0) {
+          currentTracks = data.data.results.map(item => {
+            const streamObj = item.downloadUrl ? item.downloadUrl[item.downloadUrl.length - 1] : null;
+            const imgObj = item.image ? item.image[item.image.length - 1] : null;
+            return {
+              id: item.id || Math.random().toString(),
+              title: item.name ? item.name.replace(/&quot;/g, '"').replace(/&#039;/g, "'") : 'Hindi Song',
+              artist: item.artists && item.artists.primary && item.artists.primary[0] ? item.artists.primary[0].name : 'Artist',
+              streamUrl: streamObj ? streamObj.url : '',
+              artwork: imgObj ? imgObj.url : 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=100'
+            };
+          }).filter(t => t.streamUrl !== '');
+
+          if (currentTracks.length > 0) {
+            renderTrackList(currentTracks);
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn("Engine 1 failed, trying fallback...", e);
+      }
+
+      try {
+        const res2 = await fetch(`${API_ITUNES}${encodeURIComponent(query + ' Hindi')}`);
+        const data2 = await res2.json();
+
+        if (data2 && data2.results && data2.results.length > 0) {
+          currentTracks = data2.results.map(item => ({
+            id: item.trackId ? item.trackId.toString() : Math.random().toString(),
+            title: item.trackName || 'Hindi Track',
+            artist: item.artistName || 'Bollywood Artist',
+            streamUrl: item.previewUrl || '',
+            artwork: item.artworkUrl100 ? item.artworkUrl100.replace('100x100bb', '200x200bb') : 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=100'
+          })).filter(t => t.streamUrl !== '');
+
+          if (currentTracks.length > 0) {
+            renderTrackList(currentTracks);
+            return;
+          }
+        }
+      } catch (e) {
+        console.error("Engine 2 failed:", e);
+      }
+
+      resultsList.innerHTML = `<div style="padding:20px; color:#777; font-size:12px; text-align:center;">No audio stream found for "${query}". Try another search!</div>`;
+    }
+
+    function renderTrackList(tracks) {
+      resultsList.innerHTML = '';
+      tracks.forEach((track, index) => {
+        const isFav = favoritesList.some(f => f.id === track.id);
+
+        const li = document.createElement('li');
+        li.className = `track-item ${index === currentTrackIndex ? 'active' : ''}`;
+
+        li.innerHTML = `
+          <img src="${track.artwork}" alt="Cover" onerror="this.src='https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=100'">
+          <div class="track-info">
+            <div class="track-title">${track.title}</div>
+            <div class="track-artist">${track.artist}</div>
+          </div>
+          <button class="fav-btn ${isFav ? 'active' : ''}">${isFav ? '❤️' : '🤍'}</button>
+        `;
+
+        li.querySelector('.fav-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleFavorite(track);
+          li.querySelector('.fav-btn').textContent = favoritesList.some(f => f.id === track.id) ? '❤️' : '🤍';
         });
 
-        function checkSecretCode() {
-            const input = document.getElementById('secretCodeInput');
-            const error = document.getElementById('gateError');
-            if (input.value.trim() === ACCESS_CODE) {
-                document.getElementById('gateOverlay').classList.add('gate-hidden');
-                setTimeout(() => {
-                    document.getElementById('gateOverlay').style.display = 'none';
-                }, 250);
-                document.getElementById('appRoot').classList.add('unlocked');
-                showEmptyState();
-            } else {
-                const card = document.querySelector('.gate-card');
-                card.classList.remove('shake');
-                void card.offsetWidth;
-                card.classList.add('shake');
-                error.textContent = 'Incorrect code. Please try again.';
-                input.value = '';
-                input.focus();
-            }
-        }
+        li.addEventListener('click', () => playTrack(index));
+        resultsList.appendChild(li);
+      });
+    }
 
-        document.getElementById('secretCodeInput').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') checkSecretCode();
-        });
+    function playTrack(index) {
+      if (!currentTracks[index]) return;
+      currentTrackIndex = index;
+      const track = currentTracks[index];
 
-        function stepRows(delta) {
-            const rowInput = document.getElementById('rowCount');
-            let val = parseInt(rowInput.value, 10) || 1;
-            rowInput.value = Math.min(8, Math.max(1, val + delta));
-        }
+      audioPlayer.src = track.streamUrl;
+      updatePlayIcon(true);
+      
+      audioPlayer.play().catch(err => {
+        console.log("Playback error or interaction required:", err);
+      });
 
-        function extractVideoId(url) {
-            if (!url) return null;
-            let regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([^#\&\?]*).*/;
-            let match = url.match(regExp);
-            if (match && match[2] && match[2].length === 11) return match[2];
-            const trimmed = url.trim();
-            if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) return trimmed;
-            return null;
-        }
+      renderTrackList(currentTracks);
+    }
 
-        function validateLinkInput() {
-            const rawLink = document.getElementById('youtubeLink').value;
-            const status = document.getElementById('linkStatus');
-            if (!rawLink.trim()) {
-                status.textContent = '';
-                status.className = 'link-status';
-                return null;
-            }
-            const id = extractVideoId(rawLink);
-            if (id) {
-                status.textContent = 'Valid link detected ✓';
-                status.className = 'link-status valid';
-            } else {
-                status.textContent = 'This doesn\'t look like a valid YouTube link';
-                status.className = 'link-status invalid';
-            }
-            return id;
-        }
+    function togglePlay() {
+      if (!audioPlayer.src) {
+        if (currentTracks.length > 0) playTrack(0);
+        return;
+      }
 
-        const DEFAULT_VIDEO_ID = 'mngEMrg9wOQ';
-        const COLUMNS_PER_ROW = 6;
+      if (audioPlayer.paused) {
+        audioPlayer.play();
+        updatePlayIcon(true);
+      } else {
+        audioPlayer.pause();
+        updatePlayIcon(false);
+      }
+    }
 
-        function showEmptyState() {
-            const container = document.getElementById('gridContainer');
-            container.innerHTML = '<div class="empty-state">📺<br>No videos loaded yet.<br>Choose your options above and click <strong>Generate Video Feed</strong>.</div>';
-        }
+    function updatePlayIcon(isPlaying) {
+      if (isPlaying) {
+        playIcon.innerHTML = `<path d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5zm5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5z"/>`;
+      } else {
+        playIcon.innerHTML = `<path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>`;
+      }
+    }
 
-        function generateFeed() {
-            const rawLink = document.getElementById('youtubeLink').value;
-            const container = document.getElementById('gridContainer');
+    function nextSong() {
+      if (currentTrackIndex < currentTracks.length - 1) playTrack(currentTrackIndex + 1);
+      else playTrack(0);
+    }
 
-            let videoId = DEFAULT_VIDEO_ID;
-            if (rawLink.trim()) {
-                const validId = extractVideoId(rawLink);
-                if (validId) videoId = validId;
-            }
+    function prevSong() {
+      if (currentTrackIndex > 0) playTrack(currentTrackIndex - 1);
+      else playTrack(currentTracks.length - 1);
+    }
 
-            const contentType = document.querySelector('input[name="contentType"]:checked').value;
-            let rowCount = parseInt(document.getElementById('rowCount').value, 10) || 1;
-            rowCount = Math.min(8, Math.max(1, rowCount));
+    audioPlayer.addEventListener('timeupdate', () => {
+      if (audioPlayer.duration) {
+        const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+        seekBar.value = progress;
+        currentTimeEl.textContent = formatTime(audioPlayer.currentTime);
+        totalTimeEl.textContent = formatTime(audioPlayer.duration);
+      }
+    });
 
-            if (contentType === 'short') {
-                document.documentElement.style.setProperty('--video-aspect', '9 / 16');
-                document.getElementById('feedTitle').innerText = "Live Viral by A5xi";
-            } else {
-                document.documentElement.style.setProperty('--video-aspect', '16 / 9');
-                document.getElementById('feedTitle').innerText = "Live Viral by A5xi";
-            }
+    seekBar.addEventListener('input', () => {
+      if (audioPlayer.duration) {
+        audioPlayer.currentTime = (seekBar.value / 100) * audioPlayer.duration;
+      }
+    });
 
-            container.innerHTML = '';
-            const totalElementsNeeded = rowCount * COLUMNS_PER_ROW;
+    function formatTime(seconds) {
+      const min = Math.floor(seconds / 60);
+      const sec = Math.floor(seconds % 60);
+      return `${min}:${sec < 10 ? '0' : ''}${sec}`;
+    }
 
-            for (let i = 0; i < totalElementsNeeded; i++) {
-                const card = document.createElement('div');
-                card.className = 'video-card';
+    audioPlayer.addEventListener('ended', () => nextSong());
 
-                const iframe = document.createElement('iframe');
-                // Clean standard embed URL with autoplay, mute, and looping parameters
-                iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&playsinline=1&controls=1&rel=0`;
-                iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
-                iframe.allowFullscreen = true;
+    function toggleFavorite(song) {
+      const idx = favoritesList.findIndex(f => f.id === song.id);
+      if (idx > -1) favoritesList.splice(idx, 1);
+      else favoritesList.push(song);
 
-                card.appendChild(iframe);
-                container.appendChild(card);
-            }
-        }
-    </script>
+      localStorage.setItem('redmusic_favs_v9', JSON.stringify(favoritesList));
+      if (currentTab === 'favs') renderFavorites();
+    }
+
+    function renderFavorites() {
+      if (favoritesList.length === 0) {
+        resultsList.innerHTML = '<div style="padding:20px; color:#777; font-size:12px; text-align:center;">No favorite songs saved yet.</div>';
+        return;
+      }
+
+      currentTracks = favoritesList;
+      renderTrackList(favoritesList);
+    }
+
+    searchBtn.addEventListener('click', () => {
+      fetchHindiSongs(searchInput.value.trim());
+    });
+
+    searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        fetchHindiSongs(searchInput.value.trim());
+      }
+    });
+  </script>
+
 </body>
 </html>
