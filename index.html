@@ -3,1518 +3,486 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Axi Music — Hindi Songs Player</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --red: #e11d2e;
-    --red-dark: #b3121f;
-    --red-soft: #ffe6e8;
-    --red-soft-2: #fff0f1;
-    --white: #ffffff;
-    --bg: #fdf9f9;
-    --card: #ffffff;
-    --text: #241014;
-    --text-muted: #8c6a6d;
-    --border: #f2dde0;
-    --shadow: rgba(225, 29, 46, 0.12);
-    --font-display: 'Poppins', sans-serif;
-    --font-body: 'Inter', sans-serif;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: var(--font-body);
-    background: radial-gradient(circle at 20% 0%, #fff0f1 0%, var(--bg) 45%), var(--bg);
-    color: var(--text);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    padding: 24px 16px;
-    position: relative;
-    overflow-x: hidden;
-  }
-
-  ::selection { background: var(--red); color: var(--white); }
-
-  /* ==========================================================
-     SECRET CODE ACCESS SCREEN
-  ========================================================== */
-  .access-overlay {
-    position: fixed;
-    inset: 0;
-    background: linear-gradient(160deg, #ffffff 0%, #fff2f3 55%, #ffe1e4 100%);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-    opacity: 1;
-    visibility: visible;
-    transition: opacity 0.45s ease, visibility 0.45s ease, transform 0.45s ease;
-    padding: 20px;
-  }
-
-  .access-overlay.unlocked {
-    opacity: 0;
-    visibility: hidden;
-    transform: scale(1.04);
-    pointer-events: none;
-  }
-
-  .access-card {
-    background: var(--white);
-    width: 100%;
-    max-width: 380px;
-    padding: 40px 30px 30px;
-    border-radius: 26px;
-    border: 1px solid var(--border);
-    box-shadow: 0 25px 60px -15px var(--shadow), 0 10px 25px -10px rgba(0,0,0,0.06);
-    text-align: center;
-    animation: cardAppear 0.55s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  @keyframes cardAppear {
-    from { opacity: 0; transform: translateY(18px) scale(0.96); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
-  }
-
-  .lock-icon-wrapper {
-    width: 60px;
-    height: 60px;
-    background: var(--red-soft);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 16px;
-    color: var(--red);
-  }
-
-  .access-card h3 {
-    font-family: var(--font-display);
-    font-size: 21px;
-    font-weight: 700;
-    color: var(--text);
-    margin-bottom: 6px;
-  }
-
-  .access-card p {
-    font-size: 13px;
-    color: var(--text-muted);
-    margin-bottom: 26px;
-  }
-
-  .otp-boxes {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 8px;
-  }
-
-  .otp-boxes input {
-    width: 46px;
-    height: 54px;
-    text-align: center;
-    font-size: 20px;
-    font-weight: 700;
-    font-family: var(--font-display);
-    color: var(--text);
-    background: var(--red-soft-2);
-    border: 2px solid var(--border);
-    border-radius: 12px;
-    outline: none;
-    transition: all 0.2s ease;
-  }
-
-  .otp-boxes input:focus {
-    border-color: var(--red);
-    background: var(--white);
-    box-shadow: 0 0 0 4px var(--red-soft);
-  }
-
-  .otp-boxes input.filled { border-color: var(--red); }
-
-  .access-utility-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin: 14px 2px 20px;
-    font-size: 12px;
-  }
-
-  .toggle-visibility {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--text-muted);
-    cursor: pointer;
-    user-select: none;
-    background: none;
-    border: none;
-    font-size: 12px;
-    font-family: var(--font-body);
-  }
-
-  .toggle-visibility svg { width: 15px; height: 15px; }
-
-  .remember-me {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--text-muted);
-    cursor: pointer;
-    user-select: none;
-  }
-
-  .remember-me input {
-    width: 14px;
-    height: 14px;
-    accent-color: var(--red);
-    cursor: pointer;
-  }
-
-  .caps-warning {
-    font-size: 11.5px;
-    color: var(--red-dark);
-    background: var(--red-soft);
-    border-radius: 8px;
-    padding: 6px 10px;
-    margin-bottom: 12px;
-    display: none;
-    font-weight: 600;
-  }
-
-  .caps-warning.show { display: block; }
-
-  .unlock-btn {
-    width: 100%;
-    padding: 15px;
-    border: none;
-    background: linear-gradient(135deg, var(--red), var(--red-dark));
-    color: var(--white);
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 0.4px;
-    border-radius: 14px;
-    cursor: pointer;
-    box-shadow: 0 10px 25px -8px rgba(225, 29, 46, 0.55);
-    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s;
-    font-family: var(--font-body);
-  }
-
-  .unlock-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 28px -6px rgba(225, 29, 46, 0.65); }
-  .unlock-btn:active:not(:disabled) { transform: translateY(0); }
-  .unlock-btn:disabled { opacity: 0.55; cursor: not-allowed; }
-
-  .error-msg {
-    font-size: 12px;
-    color: var(--red-dark);
-    margin-top: 14px;
-    min-height: 16px;
-    font-weight: 600;
-  }
-
-  .attempts-hint {
-    font-size: 11px;
-    color: var(--text-muted);
-    margin-top: 8px;
-  }
-
-  .shake { animation: shakeAnim 0.4s ease-in-out; }
-  @keyframes shakeAnim {
-    0%, 100% { transform: translateX(0); }
-    20%, 60% { transform: translateX(-8px); }
-    40%, 80% { transform: translateX(8px); }
-  }
-
-  /* ==========================================================
-     MAIN APP
-  ========================================================== */
-  .player-card {
-    background: var(--card);
-    width: 100%;
-    max-width: 460px;
-    padding: 30px 24px 18px;
-    border-radius: 28px;
-    border: 1px solid var(--border);
-    box-shadow: 0 30px 60px -20px var(--shadow), 0 10px 25px -10px rgba(0,0,0,0.05);
-    position: relative;
-  }
-
-  .brand-header {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 9px;
-    margin-bottom: 4px;
-  }
-
-  .brand-logo {
-    width: 30px;
-    height: 30px;
-    border-radius: 9px;
-    background: linear-gradient(135deg, var(--red), var(--red-dark));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--white);
-    box-shadow: 0 6px 14px -4px rgba(225,29,46,0.5);
-  }
-
-  .brand-logo svg { width: 16px; height: 16px; }
-
-  h2 {
-    font-family: var(--font-display);
-    font-size: 23px;
-    font-weight: 700;
-    letter-spacing: 0.2px;
-    color: var(--text);
-    text-align: center;
-  }
-
-  .subtitle {
-    font-size: 12px;
-    color: var(--text-muted);
-    margin-bottom: 20px;
-    text-align: center;
-  }
-
-  /* Tabs */
-  .tabs-bar {
-    display: flex;
-    gap: 5px;
-    margin-bottom: 16px;
-    background: var(--red-soft-2);
-    padding: 5px;
-    border-radius: 13px;
-    border: 1px solid var(--border);
-  }
-
-  .tab-btn {
-    flex: 1;
-    padding: 9px 0;
-    border: none;
-    background: transparent;
-    color: var(--text-muted);
-    font-size: 12.5px;
-    font-weight: 600;
-    border-radius: 9px;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-family: var(--font-body);
-  }
-
-  .tab-btn.active {
-    background: var(--white);
-    color: var(--red);
-    box-shadow: 0 4px 10px -3px rgba(225,29,46,0.25);
-  }
-
-  /* Search */
-  .search-container { position: relative; margin-bottom: 14px; }
-
-  .search-box {
-    display: flex;
-    background: var(--red-soft-2);
-    border: 2px solid var(--border);
-    border-radius: 14px;
-    overflow: hidden;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  }
-
-  .search-box:focus-within {
-    border-color: var(--red);
-    box-shadow: 0 0 0 4px var(--red-soft);
-    background: var(--white);
-  }
-
-  .search-box input {
-    flex: 1;
-    padding: 13px 14px;
-    border: none;
-    background: transparent;
-    color: var(--text);
-    font-size: 14px;
-    outline: none;
-    font-family: var(--font-body);
-  }
-
-  .search-box button {
-    padding: 0 20px;
-    border: none;
-    background: var(--red);
-    color: var(--white);
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    font-family: var(--font-body);
-  }
-
-  .search-box button:hover { background: var(--red-dark); }
-
-  .suggestions-dropdown {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: var(--white);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    margin-top: 6px;
-    max-height: 190px;
-    overflow-y: auto;
-    z-index: 100;
-    box-shadow: 0 15px 30px -10px rgba(0,0,0,0.15);
-    display: none;
-  }
-
-  .suggestion-item {
-    padding: 11px 14px;
-    font-size: 13px;
-    color: var(--text);
-    cursor: pointer;
-    border-bottom: 1px solid var(--red-soft-2);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .suggestion-item:last-child { border-bottom: none; }
-  .suggestion-item:hover { background: var(--red-soft); }
-  .suggestion-item .artist-tag { font-size: 11px; color: var(--text-muted); }
-
-  /* Chips */
-  .rec-chips {
-    display: flex;
-    gap: 7px;
-    overflow-x: auto;
-    padding-bottom: 8px;
-    margin-bottom: 6px;
-  }
-
-  .rec-chips::-webkit-scrollbar { display: none; }
-
-  .chip {
-    background: var(--red-soft-2);
-    border: 1px solid var(--border);
-    color: var(--text-muted);
-    padding: 7px 13px;
-    border-radius: 20px;
-    font-size: 11.5px;
-    font-weight: 500;
-    white-space: nowrap;
-    cursor: pointer;
-    transition: 0.2s;
-  }
-
-  .chip:hover { border-color: var(--red); color: var(--red); background: var(--red-soft); }
-
-  /* Track list */
-  .results-list {
-    list-style: none;
-    max-height: 250px;
-    overflow-y: auto;
-    margin: 12px 0 16px;
-    padding-right: 4px;
-  }
-
-  .results-list::-webkit-scrollbar { width: 5px; }
-  .results-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-
-  .track-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 9px;
-    background: var(--red-soft-2);
-    border: 1px solid transparent;
-    margin-bottom: 8px;
-    border-radius: 14px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .track-item:hover { background: var(--red-soft); border-color: var(--border); }
-
-  .track-item.active { background: var(--red-soft); border: 1px solid var(--red); }
-
-  .track-item img {
-    width: 44px;
-    height: 44px;
-    border-radius: 10px;
-    object-fit: cover;
-    flex-shrink: 0;
-  }
-
-  .track-info { flex: 1; overflow: hidden; text-align: left; }
-
-  .track-title {
-    font-size: 13.5px;
-    font-weight: 600;
-    color: var(--text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .track-artist {
-    font-size: 11px;
-    color: var(--text-muted);
-    margin-top: 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .track-actions { display: flex; align-items: center; gap: 2px; }
-
-  .icon-btn {
-    background: none;
-    border: none;
-    color: #c99a9d;
-    font-size: 15px;
-    cursor: pointer;
-    padding: 6px;
-    border-radius: 8px;
-    line-height: 1;
-    transition: 0.15s;
-  }
-
-  .icon-btn:hover { background: var(--red-soft); color: var(--red); }
-  .icon-btn.active { color: var(--red); }
-
-  .empty-state {
-    padding: 30px 14px;
-    color: var(--text-muted);
-    font-size: 13px;
-    text-align: center;
-    line-height: 1.6;
-  }
-
-  .loading-spinner {
-    text-align: center;
-    padding: 24px;
-    color: var(--red);
-    font-size: 13px;
-    font-weight: 600;
-  }
-
-  /* Playlists grid */
-  .playlists-section { margin: 12px 0 16px; }
-
-  .new-playlist-row {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 14px;
-  }
-
-  .new-playlist-row input {
-    flex: 1;
-    padding: 11px 14px;
-    border: 2px solid var(--border);
-    border-radius: 12px;
-    background: var(--red-soft-2);
-    font-size: 13px;
-    outline: none;
-    font-family: var(--font-body);
-    color: var(--text);
-  }
-
-  .new-playlist-row input:focus { border-color: var(--red); background: var(--white); }
-
-  .new-playlist-row button {
-    padding: 0 16px;
-    border: none;
-    background: var(--red);
-    color: var(--white);
-    border-radius: 12px;
-    font-weight: 700;
-    font-size: 13px;
-    cursor: pointer;
-  }
-
-  .new-playlist-row button:hover { background: var(--red-dark); }
-
-  .playlist-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    max-height: 260px;
-    overflow-y: auto;
-    padding-right: 2px;
-  }
-
-  .playlist-grid::-webkit-scrollbar { width: 5px; }
-  .playlist-grid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-
-  .playlist-card {
-    background: var(--red-soft-2);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 14px 12px;
-    cursor: pointer;
-    position: relative;
-    transition: all 0.2s;
-  }
-
-  .playlist-card:hover { background: var(--red-soft); border-color: var(--red); }
-
-  .playlist-card .pl-icon {
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, var(--red), var(--red-dark));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--white);
-    margin-bottom: 10px;
-  }
-
-  .playlist-card .pl-icon svg { width: 16px; height: 16px; }
-
-  .playlist-card .pl-name {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-bottom: 2px;
-  }
-
-  .playlist-card .pl-count { font-size: 11px; color: var(--text-muted); }
-
-  .playlist-card .pl-delete {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    background: var(--white);
-    border: 1px solid var(--border);
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    font-size: 11px;
-    color: var(--text-muted);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .playlist-card .pl-delete:hover { background: var(--red); color: var(--white); border-color: var(--red); }
-
-  .playlist-detail-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-
-  .back-btn {
-    background: var(--red-soft-2);
-    border: 1px solid var(--border);
-    width: 32px;
-    height: 32px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: var(--text);
-    flex-shrink: 0;
-  }
-
-  .back-btn:hover { background: var(--red-soft); border-color: var(--red); color: var(--red); }
-
-  .playlist-detail-title { font-size: 15px; font-weight: 700; font-family: var(--font-display); flex: 1; }
-  .playlist-detail-sub { font-size: 11px; color: var(--text-muted); }
-
-  /* Controls */
-  .custom-player-controls {
-    background: var(--red-soft-2);
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    padding: 16px;
-    margin-bottom: 16px;
-  }
-
-  .now-playing-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 12px;
-    min-height: 20px;
-  }
-
-  .now-playing-row .np-title {
-    font-size: 12.5px;
-    font-weight: 600;
-    color: var(--text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .now-playing-row .np-artist { font-size: 11px; color: var(--text-muted); }
-
-  .control-row {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-    margin-bottom: 14px;
-  }
-
-  .btn-circle {
-    background: var(--white);
-    border: 1px solid var(--border);
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: var(--text);
-    transition: all 0.2s ease;
-  }
-
-  .btn-circle:hover { border-color: var(--red); color: var(--red); }
-
-  .btn-play-pause {
-    background: linear-gradient(135deg, var(--red), var(--red-dark));
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: var(--white);
-    box-shadow: 0 8px 18px -4px rgba(225,29,46,0.5);
-    transition: transform 0.2s, box-shadow 0.2s;
-  }
-
-  .btn-play-pause:hover { transform: scale(1.06); }
-
-  .progress-bar-container {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 11px;
-    color: var(--text-muted);
-  }
-
-  .progress-bar {
-    flex: 1;
-    height: 4px;
-    background: var(--border);
-    border-radius: 2px;
-    outline: none;
-    -webkit-appearance: none;
-    cursor: pointer;
-  }
-
-  .progress-bar::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 13px;
-    height: 13px;
-    border-radius: 50%;
-    background: var(--red);
-    cursor: pointer;
-    box-shadow: 0 2px 6px rgba(225,29,46,0.5);
-  }
-
-  audio { display: none; }
-
-  .player-footer {
-    border-top: 1px solid var(--border);
-    padding-top: 12px;
-    text-align: center;
-    font-size: 11.5px;
-    color: var(--text-muted);
-  }
-
-  .player-footer span { color: var(--red); font-weight: 700; }
-
-  /* Add-to-playlist modal */
-  .modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(36, 16, 20, 0.45);
-    display: none;
-    align-items: flex-end;
-    justify-content: center;
-    z-index: 5000;
-    padding: 0;
-  }
-
-  .modal-overlay.show { display: flex; }
-
-  .modal-sheet {
-    background: var(--white);
-    width: 100%;
-    max-width: 460px;
-    border-radius: 22px 22px 0 0;
-    padding: 20px 22px 26px;
-    animation: sheetUp 0.3s cubic-bezier(0.16,1,0.3,1);
-    max-height: 70vh;
-    display: flex;
-    flex-direction: column;
-  }
-
-  @keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
-  .modal-handle {
-    width: 36px;
-    height: 4px;
-    background: var(--border);
-    border-radius: 2px;
-    margin: 0 auto 14px;
-  }
-
-  .modal-sheet h4 {
-    font-family: var(--font-display);
-    font-size: 15px;
-    margin-bottom: 3px;
-  }
-
-  .modal-sheet .modal-sub {
-    font-size: 12px;
-    color: var(--text-muted);
-    margin-bottom: 16px;
-  }
-
-  .modal-playlist-list { overflow-y: auto; margin-bottom: 12px; }
-
-  .modal-playlist-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px;
-    background: var(--red-soft-2);
-    border-radius: 12px;
-    margin-bottom: 8px;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 600;
-  }
-
-  .modal-playlist-item:hover { background: var(--red-soft); }
-
-  .modal-playlist-item .added-check { color: var(--red); font-size: 14px; }
-
-  @media (max-width: 400px) {
-    .player-card { padding: 22px 16px 14px; }
-    .otp-boxes input { width: 40px; height: 48px; }
-  }
-</style>
+<title>AshX — Build Pages to Pay Bills</title>
+<link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Cabinet+Grotesk:wght@300;400;500;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Fraunces:ital,wght@0,700;0,900;1,700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- ==========================================================
-     SECRET CODE ENTRY SCREEN
-========================================================== -->
-<div class="access-overlay" id="access-overlay">
-  <div class="access-card" id="access-card">
-    <div class="lock-icon-wrapper">
-      <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-        <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
-      </svg>
+<!-- ══ SCROLL PROGRESS BAR ══ -->
+<div class="nav-progress" id="navProgress"></div>
+
+<!-- ══ NAVBAR Section  -->
+<nav id="nav">
+  <div class="nav-glow-line"></div>
+
+  <a href="#" class="nav-logo">
+    <span class="logo-ash">Ash</span><span class="logo-x">X</span>
+    <span class="logo-dot"></span>
+  </a>
+
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#about"   class="nav-item" data-label="About">About</a></li>
+    <li><a href="#pages"   class="nav-item" data-label="Pages">Pages</a></li>
+    <li><a href="#content" class="nav-item" data-label="Content">Content</a></li>
+    <li>
+      <a href="#" class="nav-cta" onclick="openModal();return false;">
+        <span class="cta-text">Buy Now</span>
+        <span class="cta-shine"></span>
+      </a>
+    </li>
+  </ul>
+
+  <div class="hamburger" id="hbg" onclick="toggleMenu()">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<div class="mob-menu" id="mobMenu">
+  <a href="#about"   onclick="closeMenu()" class="mob-link">
+    <span class="mob-num">01</span><span>About</span><span class="mob-arr">→</span>
+  </a>
+  <a href="#pages"   onclick="closeMenu()" class="mob-link">
+    <span class="mob-num">02</span><span>Pages</span><span class="mob-arr">→</span>
+  </a>
+  <a href="#content" onclick="closeMenu()" class="mob-link">
+    <span class="mob-num">03</span><span>Content</span><span class="mob-arr">→</span>
+  </a>
+  <a href="#" onclick="openModal();closeMenu();return false;" class="mob-link mob-buy">
+    <span class="mob-num">💎</span><span>Start Learning with Ash</span><span class="mob-arr">→</span>
+  </a>
+</div>
+
+<!--HERO Section -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-dots"></div>
+
+  <div class="hero-inner">
+    <div class="hero-eyebrow">LEARN - BUILD - EARN</div>
+
+    <h1 class="hero-name">ASH<span class="x">X</span></h1>
+    <p class="hero-slogan">
+      <span class="w1">Build</span>
+      <span class="w2">Pages</span>
+      <span class="w3">to</span>
+      <span class="w4">Pay</span>
+      <span class="w5">Bills</span>
+    </p>
+
+    <div class="hero-btns">
+      <button class="btn btn-buy-hero" onclick="openModal()">Start Larning with Ash X↗</button>
+      <a href="#about" class="btn btn-buy-hero">Know My Story ↓</a>
     </div>
-    <h3>Protected Access</h3>
-    <p>Enter your secret code to unlock Axi Music</p>
 
-    <div class="otp-boxes" id="otp-boxes"></div>
-
-    <div class="caps-warning" id="caps-warning">⚠ Caps Lock is on</div>
-
-    <div class="access-utility-row">
-      <button type="button" class="toggle-visibility" id="toggle-visibility">
-        <svg id="eye-icon" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
-        <span id="toggle-label">Show code</span>
-      </button>
-      <label class="remember-me">
-        <input type="checkbox" id="remember-me" />
-        Remember me
-      </label>
+    <div class="hero-stats">
+      <div class="hs"><span class="hs-val">5K+</span><div class="hs-lbl">Followers</div></div>
+      <div class="hs"><span class="hs-val">50M+</span><div class="hs-lbl">Total Views</div></div>
+      <div class="hs"><span class="hs-val">₹20K+</span><div class="hs-lbl">Earned</div></div>
+      <div class="hs"><span class="hs-val">3+</span><div class="hs-lbl">Pages Built</div></div>
     </div>
+</section>
 
-    <button class="unlock-btn" id="unlock-btn">Unlock Player</button>
-    <div class="error-msg" id="error-msg"></div>
-    <div class="attempts-hint" id="attempts-hint"></div>
+<!-- TICKER  -->
+<div class="ticker" aria-hidden="true">
+  <div class="ticker-track">
+    <div class="ti">AshX</div>
+    <div class="ti">Build Pages to Pay Bills</div>
+    <div class="ti">CricLovex</div>
+    <div class="ti">The Mind Word</div>
+    <div class="ti">₹20K+ Earned</div>
+    <div class="ti">AshX</div>
+    <div class="ti">Build Pages to Pay Bills</div>
+    <div class="ti">CricLovex</div>
+    <div class="ti">The Mind Word</div>
+    <div class="ti">₹20K+ Earned</div>
   </div>
 </div>
 
-<!-- ==========================================================
-     MAIN PLAYER
-========================================================== -->
-<div class="player-card">
-  <div class="brand-header">
-    <div class="brand-logo">
-      <svg fill="currentColor" viewBox="0 0 16 16"><path d="M6 13c0 1.105-1.12 2-2.5 2S1 14.105 1 13s1.12-2 2.5-2 2.5.895 2.5 2zm9-2c0 1.105-1.12 2-2.5 2s-2.5-.895-2.5-2 1.12-2 2.5-2 2.5.895 2.5 2z"/><path fill-rule="evenodd" d="M14 11V2h1v9h-1zM6 3v10H5V3h1z"/><path d="M5 2.905a1 1 0 0 1 .9-.995l8-.8a1 1 0 0 1 1.1.995V3l-9 .9V2.905z"/></svg>
+<!-- ABOUT Section -->
+<div class="wrap" id="about">
+  <div class="sec">
+    <div class="sec-tag reveal">About AshX</div>
+    <h2 class="sec-h reveal d1">Who Is <span style="color:var(--coral)">AshX?</span></h2>
+
+    <div class="about-text reveal-left" style="max-width:680px;margin-bottom:36px;">
+      <p>I'm <b>Rathod Ashvin</b> from Gujarat — a self-taught Instagram creator who builds <span class="hl">faceless pages</span> from scratch. No team. No budget. Just consistency and the hunger to learn.</p>
+      <p>Started in <b>2022</b> with zero knowledge. My first page <b>@ashadits_</b> grew to 3.4K followers before it got banned. That failure taught me the most. Instead of quitting, I used the earnings to buy my first products and kept going.</p>
+      <p>I later tried a football page (Goalxnews) but it didn't work. So I rebranded it to <b>CricLovex</b>. In 2025, I launched my second page — <b>The Mind Word</b>.</p>
+      <p>Today I run both pages. My cricket page <b>CricLovex</b> alone crossed <span class="hl">23M+ views in 30 days</span> (March-April 2026)</p>
     </div>
-    <h2>Axi Music</h2>
-  </div>
-  <div class="subtitle">Pure Hindi Songs • Search, Play &amp; Save</div>
 
-  <!-- Tabs -->
-  <div class="tabs-bar">
-    <button class="tab-btn active" id="tab-search" onclick="switchTab('search')">Search</button>
-    <button class="tab-btn" id="tab-favs" onclick="switchTab('favs')">Favorites</button>
-    <button class="tab-btn" id="tab-playlists" onclick="switchTab('playlists')">Playlists</button>
-  </div>
-
-  <!-- Search Section -->
-  <div id="search-section">
-    <div class="search-container">
-      <div class="search-box">
-        <input type="text" id="search-input" placeholder="Search song name..." autocomplete="off" />
-        <button id="search-btn">Search</button>
+    <div class="about-cards reveal d1">
+      <div class="about-card">
+        <div class="ac-label">The Struggle</div>
+        <div class="ac-text">Started with nothing — no mentor, no money, no guidance. Got pages banned and made every mistake possible. That's why I now understand what actually works.</div>
       </div>
-      <div class="suggestions-dropdown" id="suggestions-box"></div>
-    </div>
-
-    <div class="rec-chips">
-      <span class="chip" onclick="quickSearch('Zalim')">🔥 Zalim</span>
-      <span class="chip" onclick="quickSearch('Lag Ja Gale')">🌹 Lag Ja Gale</span>
-      <span class="chip" onclick="quickSearch('Apna Bana Le')">✨ Apna Bana Le</span>
-      <span class="chip" onclick="quickSearch('Arijit Singh')">🎤 Arijit Singh</span>
-      <span class="chip" onclick="quickSearch('Tum Se Hi')">❤️ Tum Se Hi</span>
+      <div class="about-card">
+        <div class="ac-label">The Breakthrough</div>
+        <div class="ac-text">After my first page got banned, I applied everything I learned and built two stronger pages in different niches.</div>
+      </div>
+      <div class="about-card">
+        <div class="ac-label">The Goal</div>
+        <div class="ac-text">Grow both pages to <b>10K+ followers</b>, create a digital guide, and prove that anyone can build a profitable faceless Instagram page — no face required.</div>
+      </div>
     </div>
   </div>
+</div>
 
-  <!-- Playlists Section -->
-  <div id="playlists-section" class="playlists-section" style="display:none;">
-    <div id="playlists-list-view">
-      <div class="new-playlist-row">
-        <input type="text" id="new-playlist-input" placeholder="New playlist name..." maxlength="30" />
-        <button id="create-playlist-btn">Create</button>
+<div class="sep"></div>
+
+<!-- Instagram Pages Section! -->
+<div class="wrap" id="pages">
+  <div class="sec">
+    <div class="sec-tag reveal">Active Pages</div>
+    <h2 class="sec-h reveal d1">My <span style="color:var(--coral)">Pages</span></h2>
+    <div class="pages-grid">
+
+      <!-- CARD 1: CricLovex -->
+      <div class="pcard reveal d1" data-tilt>
+        <div class="pcard-glow"></div>
+        <div class="pcard-top">
+          <div class="picon picon-anim">🏏</div>
+          <div>
+            <div class="phandle">@cricl0vex</div>
+            <div class="pname">CricLovex</div>
+          </div>
+          <span class="pcard-badge">Active</span>
+        </div>
+        <div class="pcard-body">
+          <p class="pdesc">Home of Cricket Lovers — Memes, Breaking News & IPL Updates!</p>
+          <div class="pmetrics">
+            <div class="pm">
+              <span class="pm-val count-up" data-target="2000" data-suffix="K+">2K+</span>
+              <span class="pm-lbl">Followers</span>
+            </div>
+            <div class="pm pm-highlight">
+              <span class="pm-val count-up" data-target="23" data-suffix="M+">23M+</span>
+              <span class="pm-lbl">Views 30Days</span>
+            </div>
+            <div class="pm">
+              <span class="pm-val">6.6M+</span>
+              <span class="pm-lbl">Reached</span>
+            </div>
+            <div class="pm pm-highlight">
+              <span class="pm-val">98.4%</span>
+              <span class="pm-lbl">Non-Follower</span>
+            </div>
+          </div>
+          <div class="reach-bar-wrap">
+            <div class="reach-bar-label">
+              <span>Non-follower reach</span>
+              <span class="reach-pct">98.4%</span>
+            </div>
+            <div class="reach-bar-track">
+              <div class="reach-bar-fill" data-width="98.4"></div>
+            </div>
+          </div>
+          <div class="pchips">
+            <span class="pchip">Cricket</span>
+            <span class="pchip">Memes</span>
+            <span class="pchip">IPL</span>
+            <span class="pchip">News</span>
+          </div>
+        </div>
+        <div class="pcard-foot">
+          <a href="https://www.instagram.com/cricl0vex" target="_blank" class="plink">
+            <span class="plink-dot"></span>
+            Go to CRICLOVEX ↗
+          </a>
+        </div>
       </div>
-      <div class="playlist-grid" id="playlist-grid"></div>
+
+      <!-- CARD 2: The Mind Word -->
+      <div class="pcard reveal d2" data-tilt>
+        <div class="pcard-glow"></div>
+        <div class="pcard-top">
+          <div class="picon picon-anim">🧠</div>
+          <div>
+            <div class="phandle">@themindword_</div>
+            <div class="pname">Mind Word</div>
+          </div>
+          <span class="pcard-badge">Growing</span>
+        </div>
+        <div class="pcard-body">
+          <p class="pdesc">Mindset · Motivation · Psychology — Powerful words, real discipline</p>
+          <div class="pmetrics">
+            <div class="pm">
+              <span class="pm-val">3K+</span>
+              <span class="pm-lbl">Followers</span>
+            </div>
+            <div class="pm pm-highlight">
+              <span class="pm-val">1M+</span>
+              <span class="pm-lbl">Views 10d</span>
+            </div>
+            <div class="pm">
+              <span class="pm-val">307K+</span>
+              <span class="pm-lbl">Reached</span>
+            </div>
+            <div class="pm pm-highlight">
+              <span class="pm-val">99.8%</span>
+              <span class="pm-lbl">Non-Follower</span>
+            </div>
+          </div>
+          <div class="reach-bar-wrap">
+            <div class="reach-bar-label">
+              <span>Non-follower reach</span>
+              <span class="reach-pct">99.8%</span>
+            </div>
+            <div class="reach-bar-track">
+              <div class="reach-bar-fill" data-width="99.8"></div>
+            </div>
+          </div>
+          <div class="pchips">
+            <span class="pchip">Mindset</span>
+            <span class="pchip"> Psychology</span>
+            <span class="pchip">Motivation</span>
+          </div>
+        </div>
+        <div class="pcard-foot">
+          <a href="https://www.instagram.com/themindword_" target="_blank" class="plink">
+            <span class="plink-dot"></span>
+            Go to MindWord ↗
+          </a>
+        </div>
+      </div>
     </div>
-    <div id="playlist-detail-view" style="display:none;">
-      <div class="playlist-detail-header">
-        <button class="back-btn" onclick="closePlaylistDetail()">
-          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+
+    <div class="past-row reveal">
+      <span class="past-pill">PAST PAGE</span>
+      <div>
+        <div class="past-name">@ashadits_ — 2023 to July 2025</div>
+        <p class="past-text">This one is My Favourite Page!💎 Built from absolute zero to <b>3,261 followers</b> with <b>10M+ total views</b> and <b>100+ reels</b> over 1.5 years — all organic, no paid promotion. Covered Cricket, IPL news, and viral sports content. This page was my real classroom: I learned content strategy, audience behavior, posting consistency, and what it actually takes to grow on Instagram. Suspended in July 2025 for a policy violation — one of the toughest moments in this journey. But every lesson, every mistake, and every win from @ashadits_ directly shaped how CricLovex and The Mind Word were built.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!--EARNINGS Section!-->
+<div class="wrap">
+  <div class="sec">
+    <div class="sec-tag reveal">Revenue</div>
+    <h2 class="sec-h reveal d1">Total <span style="color:var(--coral)">Earnings</span></h2>
+
+    <div class="earn-layout reveal-scale">
+
+      <div class="earn-left">
+        <div class="earn-amount-wrap">
+          <div class="earn-currency">₹</div>
+          <div class="earn-number">20,000<span class="earn-plus">+</span></div>
+        </div>
+        <p class="earn-tagline">Earned across all pages!</p>
+        <div class="earn-since">
+          <span class="earn-since-dot"></span>
+          Since 2022 · Still Growing
+        </div>
+      </div>
+
+      <div class="earn-divider"></div>
+
+      <div class="earn-right">
+        <div class="earn-sources-label">Earned from</div>
+        <div class="earn-sources">
+          <div class="earn-source">
+            <div class="es-icon">🚀</div>
+            <div class="es-info">
+              <div class="es-name">Instagram/Youtube</div>
+              <div class="es-desc">Logo & Story Pramotions</div>
+            </div>
+          </div>
+          <div class="earn-source">
+            <div class="es-icon">🧑‍💻</div>
+            <div class="es-info">
+              <div class="es-name">Digital Services</div>
+              <div class="es-desc">IMG/VID Editing</div>
+            </div>
+          </div>
+        </div>
+
+        <button class="earn-cta" onclick="openModal()">
+          <span class="earn-cta-icon"></span>
+          <span class="earn-cta-text">Start Larning</span>
+          <span class="earn-cta-arrow">→</span>
         </button>
-        <div>
-          <div class="playlist-detail-title" id="playlist-detail-title">Playlist</div>
-          <div class="playlist-detail-sub" id="playlist-detail-sub">0 songs</div>
-        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!--JOURNEY Section -->
+<div class="wrap" id="journey">
+  <div class="sec">
+    <div class="sec-tag reveal">Timeline</div>
+    <h2 class="sec-h reveal d1">The <span style="color:var(--coral)">Journey</span></h2>
+    
+    <div class="journey-wrap">
+      <div class="jitem">
+        <div class="jdot" ></div>
+        <div class="jyear">2022</div>
+        <div class="jtitle">The Beginning — Learning by Failing</div>
+        <div class="jdesc">Started my Instagram journey with zero knowledge. Launched my very first page and got it banned for breaking rules I didn't even know existed. Instead of quitting, I decided to understand the platform properly.</div>
+      </div>
+      <div class="jitem">
+        <div class="jdot"></div>
+        <div class="jyear">2023</div>
+        <div class="jtitle">@ashadits_ — First Real Growth</div>
+        <div class="jdesc">Built my first proper page from scratch. Grew it to <b>3.4K followers</b> with <b>10M+ views</b>. Learned content creation, consistency, and audience psychology. This page was later banned in 2025 — but the lessons became my foundation.</div>
+      </div>
+      <div class="jitem">
+        <div class="jdot"></div>
+        <div class="jyear">2024</div>
+        <div class="jtitle">Rebranding & New Experiments</div>
+        <div class="jdesc">Started a football page (Goalxnews) but it didn't click. Rebranded it into <b>CricLovex</b>. Began applying everything I had learned from previous failures.</div>
+      </div>
+      <div class="jitem">
+        <div class="jdot"></div>
+        <div class="jyear">2025</div>
+        <div class="jtitle">Breakthrough Year</div>
+        <div class="jdesc">Launched <b>The Mind Word</b> — my second faceless page. <b>CricLovex</b> exploded with <b>23M+ views in 90 days</b> and one reel crossing <b>10.1M views organically</b>. Started earning real income through digital products and promotions.</div>
+      </div>
+      <div class="jitem">
+        <div class="jdot" style="background:var(--warm);box-shadow:0 0 12px rgba(255,179,71,.4);"></div>
+        <div class="jyear">Now</div>
+        <div class="jtitle">Scaling & Giving Back</div>
+        <div class="jdesc">Running two successful pages in different niches. Focused on scaling both to 10K+ followers, creating my first digital guide <b>"Content with Ash"</b>, and helping others build profitable faceless pages.</div>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- Song List Display (shared by search / favorites / playlist detail) -->
-  <ul class="results-list" id="results-list"></ul>
+<div class="sep"></div>
 
-  <!-- Controls -->
-  <div class="custom-player-controls">
-    <div class="now-playing-row" id="now-playing-row">
-      <span class="np-title" id="np-title">Nothing playing yet</span>
+<!--CONTACT — Instagram links + Email only, NO form -->
+<div class="wrap" id="content">
+  <div class="sec">
+    <div class="sec-tag reveal">Get In Touch</div>
+    <h2 class="sec-h reveal d1">Content with <span style="color:var(--coral)">Ashx</span></h2>
+    <div class="content-grid">
+
+      <!-- left: info blocks -->
+      <div class="content-info">
+        <div class="info-block reveal d1">
+          <div class="ib-label">About Content</div>
+          <div class="ib-title">What I Do</div>
+          <div class="ib-text">I create viral faceless content for Cricket and Motivation niches — reels, posts, and strategies built around organic reach. Open for brand deals, shoutouts, and collaborations.</div>
+        </div>
+
+         <div class="info-block reveal d3">
+          <div class="ib-label">Direct Email</div>
+          <div class="ib-title">Send Me a Mail</div>
+          <div class="ib-text" style="margin-bottom:14px;">For brand deals, collaborations or any inquiry — email me directly.</div>
+          <a href="mailto:ashvineditx@gmail.com" class="ib-link" style="text-decoration:none;">
+            <span class="link-icon">✉️</span>
+            <div>
+              <div>Email Me</div>
+              <div class="link-handle">ashvineditx@gmail.com</div>
+            </div>
+            <span style="margin-left:auto;color:var(--muted);font-size:11px;">↗</span>
+          </a>
+        </div>
+
+        <div class="info-block reveal d2">
+          <div class="ib-label">My Pages</div>
+          <div class="ib-title">Find Me On Instagram</div>
+          <div class="ib-links">
+            <a href="https://www.instagram.com/cricl0vex" target="_blank" class="ib-link">
+              <span class="link-icon">🏏</span>
+              <div>
+                <div>Cric Lovex</div>
+                <div class="link-handle">@cricl0vex</div>
+              </div>
+              <span style="margin-left:auto;color:var(--muted);font-size:11px;">↗</span>
+            </a>
+            <a href="https://www.instagram.com/themindword_" target="_blank" class="ib-link">
+              <span class="link-icon">🧠</span>
+              <div>
+                <div>The Mind Word</div>
+                <div class="link-handle">@themindword_</div>
+              </div>
+              <span style="margin-left:auto;color:var(--muted);font-size:11px;">↗</span>
+            </a>
+            <a href="https://www.instagram.com/theash.x" target="_blank" class="ib-link">
+              <span class="link-icon">⚡</span>
+              <div>
+                <div>Ash X</div>
+                <div class="link-handle">@theash.x</div>
+              </div>
+              <span style="margin-left:auto;color:var(--muted);font-size:11px;">↗</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Email block -->
+        <!-- <div class="info-block reveal d3">
+          <div class="ib-label">Direct Email</div>
+          <div class="ib-title">Send Me a Mail</div>
+          <div class="ib-text" style="margin-bottom:14px;">For brand deals, collaborations or any inquiry — email me directly.</div>
+          <a href="mailto:ashvineditx@gmail.com" class="ib-link" style="text-decoration:none;">
+            <span class="link-icon">✉️</span>
+            <div>
+              <div>Email Me</div>
+              <div class="link-handle">ashvineditx@gmail.com</div>
+            </div>
+            <span style="margin-left:auto;color:var(--muted);font-size:11px;">↗</span>
+          </a>
+        </div> -->
+
+      </div>
     </div>
-
-    <div class="control-row">
-      <button class="btn-circle" onclick="prevSong()" title="Previous">
-        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M11 3.5a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-1 0V4a.5.5 0 0 1 .5-.5zm-6 0a.5.5 0 0 1 .5.5v3.793l4.146-4.147a.5.5 0 0 1 .708.708L6.207 8l4.147 4.146a.5.5 0 0 1-.708.708L5.5 8.707V12a.5.5 0 0 1-1 0V4a.5.5 0 0 1 .5-.5z"/></svg>
-      </button>
-
-      <button class="btn-play-pause" id="play-btn" onclick="togglePlay()" title="Play/Pause">
-        <svg id="play-icon" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/></svg>
-      </button>
-
-      <button class="btn-circle" onclick="nextSong()" title="Next">
-        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5 3.5a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 1 0V4a.5.5 0 0 0-.5-.5zm6 0a.5.5 0 0 0-.5.5v3.793L6.354 3.646a.5.5 0 1 0-.708.708L9.793 8l-4.147 4.146a.5.5 0 0 0 .708.708L10.5 8.707V12a.5.5 0 0 0 1 0V4a.5.5 0 0 0-.5-.5z"/></svg>
-      </button>
-    </div>
-
-    <div class="progress-bar-container">
-      <span id="current-time">0:00</span>
-      <input type="range" class="progress-bar" id="seek-bar" value="0" max="100">
-      <span id="total-time">0:00</span>
-    </div>
-
-    <audio id="audio-player"></audio>
-  </div>
-
-  <div class="player-footer">
-    Songs powered by <span>Axi Music</span>
   </div>
 </div>
 
-<!-- ==========================================================
-     ADD TO PLAYLIST MODAL
-========================================================== -->
-<div class="modal-overlay" id="modal-overlay">
-  <div class="modal-sheet">
-    <div class="modal-handle"></div>
-    <h4 id="modal-track-title">Add to playlist</h4>
-    <div class="modal-sub" id="modal-track-artist"></div>
-    <div class="new-playlist-row">
-      <input type="text" id="modal-new-playlist-input" placeholder="Create new playlist..." maxlength="30" />
-      <button id="modal-create-btn">Add</button>
+<!-- ══ FOOTER ══ -->
+<footer>
+  <div class="f-logo">Ash<span>X</span></div>
+  <div class="f-links">
+    <a href="https://www.instagram.com/theash.x" target="_blank">AshX</a>
+    <a href="https://www.instagram.com/cricl0vex" target="_blank">CricLovex</a>
+    <a href="https://www.instagram.com/themindword_" target="_blank">TheMindWord</a>
+  </div>
+  <div class="f-copy">© 2025 AshX · Build Pages to Pay Bills</div>
+</footer>
+
+<!-- ══ BUY NOW MODAL ══ -->
+<div class="overlay" id="overlay" onclick="handleOC(event)">
+  <div class="modal">
+    <div class="modal-head">
+      <button class="m-close" onclick="closeModal()">✕</button>
+      <div class="m-tag">⚡ DIGITAL PRODUCT</div>
+      <div class="m-title">Content with Ash!</div>
+      <div class="m-sub">Complete guide to building a faceless Instagram page</div>
     </div>
-    <div class="modal-playlist-list" id="modal-playlist-list"></div>
-    <button class="unlock-btn" style="background:var(--red-soft-2); color:var(--text); box-shadow:none;" id="modal-close-btn">Done</button>
+    <div class="modal-body">
+      <div class="m-sec">What You'll Get</div>
+      <ul class="m-list">
+        <li><span class="m-dot"></span>Full PDF/PPT guide on building faceless Instagram pages</li>
+        <li><span class="m-dot"></span>Niche selection framework — pick the right niche every time</li>
+        <li><span class="m-dot"></span>Content strategy behind 23M+ organic views</li>
+        <li><span class="m-dot"></span>How to hit 98%+ reach to non-followers consistently</li>
+        <li><span class="m-dot"></span>Monetisation roadmap from ₹0 to ₹20K+</li>
+        <li><span class="m-dot"></span>Real analytics & screenshots from my actual pages</li>
+      </ul>
+      <div class="m-price-box">
+        <div>
+          <div class="m-price-num">Coming Soon</div>
+          <div class="m-price-note">Price to be announced shortly</div>
+        </div>
+        <div style="font-size:12px;color:var(--muted);text-align:right;">PDF/PPT<br>Instant Delivery</div>
+      </div>
+      <a href="#" class="m-pay" onclick="handlePay(event)">🛒 Proceed to Payment</a>
+      <p class="m-note">DM for early access →
+        <a href="https://www.instagram.com/theash.x" target="_blank">@theash.x</a>
+      </p>
+    </div>
   </div>
 </div>
 
-<script>
-  // ==========================================
-  // SECRET PASSCODE SYSTEM
-  // ==========================================
-  const CORRECT_CODE = "A5VN"; // Set your secret code here
-  const REMEMBER_KEY = "axi_remember_unlock_v1";
-  const MAX_ATTEMPTS = 5;
-  const LOCKOUT_SECONDS = 30;
-
-  const overlay = document.getElementById('access-overlay');
-  const accessCard = document.getElementById('access-card');
-  const unlockBtn = document.getElementById('unlock-btn');
-  const errorMsg = document.getElementById('error-msg');
-  const attemptsHint = document.getElementById('attempts-hint');
-  const otpBoxesWrap = document.getElementById('otp-boxes');
-  const capsWarning = document.getElementById('caps-warning');
-  const toggleVisibilityBtn = document.getElementById('toggle-visibility');
-  const toggleLabel = document.getElementById('toggle-label');
-  const rememberMeBox = document.getElementById('remember-me');
-
-  let failedAttempts = 0;
-  let isLocked = false;
-  let codeVisible = false;
-
-  // Build OTP-style boxes matching the code length
-  const codeLength = CORRECT_CODE.length;
-  for (let i = 0; i < codeLength; i++) {
-    const inp = document.createElement('input');
-    inp.type = 'password';
-    inp.maxLength = 1;
-    inp.autocomplete = 'off';
-    inp.dataset.index = i;
-    otpBoxesWrap.appendChild(inp);
-  }
-  const otpInputs = Array.from(otpBoxesWrap.querySelectorAll('input'));
-  otpInputs[0].focus();
-
-  otpInputs.forEach((inp, idx) => {
-    inp.addEventListener('input', (e) => {
-      inp.classList.toggle('filled', inp.value.length > 0);
-      if (inp.value && idx < otpInputs.length - 1) otpInputs[idx + 1].focus();
-      errorMsg.textContent = '';
-    });
-    inp.addEventListener('keydown', (e) => {
-      if (e.key === 'Backspace' && !inp.value && idx > 0) otpInputs[idx - 1].focus();
-      if (e.key === 'Enter') checkPasscode();
-      capsWarning.classList.toggle('show', e.getModifierState && e.getModifierState('CapsLock'));
-    });
-    inp.addEventListener('paste', (e) => {
-      e.preventDefault();
-      const text = (e.clipboardData || window.clipboardData).getData('text').slice(0, codeLength);
-      text.split('').forEach((ch, i) => { if (otpInputs[i]) { otpInputs[i].value = ch; otpInputs[i].classList.add('filled'); } });
-      otpInputs[Math.min(text.length, codeLength - 1)].focus();
-    });
-  });
-
-  toggleVisibilityBtn.addEventListener('click', () => {
-    codeVisible = !codeVisible;
-    otpInputs.forEach(inp => inp.type = codeVisible ? 'text' : 'password');
-    toggleLabel.textContent = codeVisible ? 'Hide code' : 'Show code';
-  });
-
-  function getEnteredCode() {
-    return otpInputs.map(i => i.value).join('');
-  }
-
-  function checkPasscode() {
-    if (isLocked) return;
-    const enteredCode = getEnteredCode();
-
-    if (enteredCode === CORRECT_CODE) {
-      errorMsg.textContent = '';
-      if (rememberMeBox.checked) localStorage.setItem(REMEMBER_KEY, '1');
-      overlay.classList.add('unlocked');
-      if (currentTracks.length === 0) fetchHindiSongs('Zalim');
-    } else {
-      failedAttempts++;
-      errorMsg.textContent = 'Incorrect passcode. Please try again.';
-      accessCard.classList.remove('shake');
-      void accessCard.offsetWidth;
-      accessCard.classList.add('shake');
-      otpInputs.forEach(i => { i.value = ''; i.classList.remove('filled'); });
-      otpInputs[0].focus();
-
-      const remaining = MAX_ATTEMPTS - failedAttempts;
-      if (remaining > 0) {
-        attemptsHint.textContent = `${remaining} attempt${remaining === 1 ? '' : 's'} remaining`;
-      }
-      if (failedAttempts >= MAX_ATTEMPTS) {
-        lockOut();
-      }
-    }
-  }
-
-  function lockOut() {
-    isLocked = true;
-    unlockBtn.disabled = true;
-    let secondsLeft = LOCKOUT_SECONDS;
-    attemptsHint.textContent = `Too many attempts. Try again in ${secondsLeft}s`;
-    const timer = setInterval(() => {
-      secondsLeft--;
-      attemptsHint.textContent = `Too many attempts. Try again in ${secondsLeft}s`;
-      if (secondsLeft <= 0) {
-        clearInterval(timer);
-        isLocked = false;
-        failedAttempts = 0;
-        unlockBtn.disabled = false;
-        attemptsHint.textContent = '';
-      }
-    }, 1000);
-  }
-
-  unlockBtn.addEventListener('click', checkPasscode);
-
-  // Skip screen if remembered
-  if (localStorage.getItem(REMEMBER_KEY) === '1') {
-    overlay.classList.add('unlocked');
-  }
-
-  // ==========================================
-  // MAIN MUSIC PLAYER SYSTEM
-  // ==========================================
-  const API_JIOSAAVN = "https://saavn.sumit.co/api/search/songs?query=";
-  const API_ITUNES = "https://itunes.apple.com/search?media=music&entity=song&term=";
-
-  let currentTracks = [];
-  let currentTrackIndex = -1;
-  let favoritesList = JSON.parse(localStorage.getItem('axi_favs_v1') || '[]');
-  let playlists = JSON.parse(localStorage.getItem('axi_playlists_v1') || '[]');
-  let currentTab = 'search';
-  let activePlaylistId = null;
-  let suggestionDebounce = null;
-  let modalTrack = null;
-
-  const searchInput = document.getElementById('search-input');
-  const searchBtn = document.getElementById('search-btn');
-  const suggestionsBox = document.getElementById('suggestions-box');
-  const resultsList = document.getElementById('results-list');
-  const audioPlayer = document.getElementById('audio-player');
-  const playIcon = document.getElementById('play-icon');
-  const seekBar = document.getElementById('seek-bar');
-  const currentTimeEl = document.getElementById('current-time');
-  const totalTimeEl = document.getElementById('total-time');
-  const npTitle = document.getElementById('np-title');
-
-  function savePlaylists() { localStorage.setItem('axi_playlists_v1', JSON.stringify(playlists)); }
-  function saveFavorites() { localStorage.setItem('axi_favs_v1', JSON.stringify(favoritesList)); }
-
-  // ---------- Tabs ----------
-  function switchTab(tab) {
-    currentTab = tab;
-    document.getElementById('tab-search').classList.toggle('active', tab === 'search');
-    document.getElementById('tab-favs').classList.toggle('active', tab === 'favs');
-    document.getElementById('tab-playlists').classList.toggle('active', tab === 'playlists');
-
-    document.getElementById('search-section').style.display = tab === 'search' ? 'block' : 'none';
-    document.getElementById('playlists-section').style.display = tab === 'playlists' ? 'block' : 'none';
-    resultsList.style.display = tab === 'playlists' ? 'none' : 'block';
-    suggestionsBox.style.display = 'none';
-
-    if (tab === 'search') {
-      renderTrackList(currentTracks.length ? currentTracks : [], 'normal');
-      if (currentTracks.length === 0) fetchHindiSongs('Zalim');
-    } else if (tab === 'favs') {
-      renderFavorites();
-    } else if (tab === 'playlists') {
-      closePlaylistDetail();
-      renderPlaylistGrid();
-    }
-  }
-
-  function quickSearch(term) {
-    searchInput.value = term;
-    suggestionsBox.style.display = 'none';
-    fetchHindiSongs(term);
-  }
-
-  searchInput.addEventListener('input', (e) => {
-    const query = e.target.value.trim();
-    clearTimeout(suggestionDebounce);
-    if (query.length < 2) { suggestionsBox.style.display = 'none'; return; }
-    suggestionDebounce = setTimeout(() => fetchSuggestions(query), 250);
-  });
-
-  async function fetchSuggestions(query) {
-    try {
-      const res = await fetch(`${API_JIOSAAVN}${encodeURIComponent(query)}`);
-      const data = await res.json();
-      if (data && data.data && data.data.results && data.data.results.length > 0) {
-        renderSuggestions(data.data.results.slice(0, 5));
-      } else {
-        suggestionsBox.style.display = 'none';
-      }
-    } catch (e) {
-      suggestionsBox.style.display = 'none';
-    }
-  }
-
-  function renderSuggestions(list) {
-    suggestionsBox.innerHTML = '';
-    list.forEach(item => {
-      const title = item.name ? item.name.replace(/&quot;/g, '"').replace(/&#039;/g, "'") : '';
-      const artist = item.artists && item.artists.primary && item.artists.primary[0] ? item.artists.primary[0].name : '';
-      const div = document.createElement('div');
-      div.className = 'suggestion-item';
-      div.innerHTML = `<span>🎵 ${title}</span> <span class="artist-tag">${artist}</span>`;
-      div.addEventListener('click', () => {
-        searchInput.value = title;
-        suggestionsBox.style.display = 'none';
-        fetchHindiSongs(title);
-      });
-      suggestionsBox.appendChild(div);
-    });
-    suggestionsBox.style.display = 'block';
-  }
-
-  document.addEventListener('click', (e) => {
-    if (!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
-      suggestionsBox.style.display = 'none';
-    }
-  });
-
-  async function fetchHindiSongs(query) {
-    if (!query.trim()) return;
-    suggestionsBox.style.display = 'none';
-    resultsList.innerHTML = '<div class="loading-spinner">⚡ Searching for songs...</div>';
-
-    try {
-      const res = await fetch(`${API_JIOSAAVN}${encodeURIComponent(query)}`);
-      const data = await res.json();
-      if (data && data.data && data.data.results && data.data.results.length > 0) {
-        currentTracks = data.data.results.map(item => {
-          const streamObj = item.downloadUrl ? item.downloadUrl[item.downloadUrl.length - 1] : null;
-          const imgObj = item.image ? item.image[item.image.length - 1] : null;
-          return {
-            id: item.id || Math.random().toString(),
-            title: item.name ? item.name.replace(/&quot;/g, '"').replace(/&#039;/g, "'") : 'Hindi Song',
-            artist: item.artists && item.artists.primary && item.artists.primary[0] ? item.artists.primary[0].name : 'Artist',
-            streamUrl: streamObj ? streamObj.url : '',
-            artwork: imgObj ? imgObj.url : 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=100'
-          };
-        }).filter(t => t.streamUrl !== '');
-
-        if (currentTracks.length > 0) { renderTrackList(currentTracks, 'normal'); return; }
-      }
-    } catch (e) { console.warn('Engine 1 failed, trying fallback...', e); }
-
-    try {
-      const res2 = await fetch(`${API_ITUNES}${encodeURIComponent(query + ' Hindi')}`);
-      const data2 = await res2.json();
-      if (data2 && data2.results && data2.results.length > 0) {
-        currentTracks = data2.results.map(item => ({
-          id: item.trackId ? item.trackId.toString() : Math.random().toString(),
-          title: item.trackName || 'Hindi Track',
-          artist: item.artistName || 'Bollywood Artist',
-          streamUrl: item.previewUrl || '',
-          artwork: item.artworkUrl100 ? item.artworkUrl100.replace('100x100bb', '200x200bb') : 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=100'
-        })).filter(t => t.streamUrl !== '');
-
-        if (currentTracks.length > 0) { renderTrackList(currentTracks, 'normal'); return; }
-      }
-    } catch (e) { console.error('Engine 2 failed:', e); }
-
-    resultsList.innerHTML = `<div class="empty-state">No audio stream found for "${query}".<br>Try another search!</div>`;
-  }
-
-  // ---------- Track list rendering ----------
-  function renderTrackList(tracks, context) {
-    resultsList.innerHTML = '';
-    if (!tracks || tracks.length === 0) {
-      resultsList.innerHTML = '<div class="empty-state">No songs here yet.</div>';
-      return;
-    }
-    tracks.forEach((track, index) => {
-      const isFav = favoritesList.some(f => f.id === track.id);
-      const li = document.createElement('li');
-      li.className = `track-item ${index === currentTrackIndex && tracks === currentTracks ? 'active' : ''}`;
-
-      const removeBtn = context === 'playlist'
-        ? `<button class="icon-btn remove-btn" title="Remove from playlist">✕</button>`
-        : `<button class="icon-btn add-btn" title="Add to playlist">➕</button>`;
-
-      li.innerHTML = `
-        <img src="${track.artwork}" alt="Cover" class="${index === currentTrackIndex && tracks === currentTracks ? 'spin' : ''}" onerror="this.src='https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=100'">
-        <div class="track-info">
-          <div class="track-title">${track.title}</div>
-          <div class="track-artist">${track.artist}</div>
-        </div>
-        <div class="track-actions">
-          <button class="icon-btn fav-btn ${isFav ? 'active' : ''}" title="Favorite">${isFav ? '❤️' : '🤍'}</button>
-          ${removeBtn}
-        </div>
-      `;
-
-      li.querySelector('.fav-btn').addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleFavorite(track);
-        const btn = li.querySelector('.fav-btn');
-        const nowFav = favoritesList.some(f => f.id === track.id);
-        btn.textContent = nowFav ? '❤️' : '🤍';
-        btn.classList.toggle('active', nowFav);
-      });
-
-      const addBtn = li.querySelector('.add-btn');
-      if (addBtn) addBtn.addEventListener('click', (e) => { e.stopPropagation(); openAddToPlaylistModal(track); });
-
-      const removeBtnEl = li.querySelector('.remove-btn');
-      if (removeBtnEl) removeBtnEl.addEventListener('click', (e) => {
-        e.stopPropagation();
-        removeFromPlaylist(activePlaylistId, track.id);
-      });
-
-      li.addEventListener('click', () => playTrack(index, tracks));
-      resultsList.appendChild(li);
-    });
-  }
-
-  function playTrack(index, sourceTracks) {
-    const tracks = sourceTracks || currentTracks;
-    if (!tracks[index]) return;
-    currentTracks = tracks;
-    currentTrackIndex = index;
-    const track = tracks[index];
-
-    audioPlayer.src = track.streamUrl;
-    updatePlayIcon(true);
-    npTitle.textContent = `${track.title} — ${track.artist}`;
-
-    audioPlayer.play().catch(err => console.log('Playback error or interaction required:', err));
-    renderTrackList(tracks, currentTab === 'playlists' && activePlaylistId ? 'playlist' : 'normal');
-  }
-
-  function togglePlay() {
-    if (!audioPlayer.src) {
-      if (currentTracks.length > 0) playTrack(0, currentTracks);
-      return;
-    }
-    if (audioPlayer.paused) { audioPlayer.play(); updatePlayIcon(true); }
-    else { audioPlayer.pause(); updatePlayIcon(false); }
-    renderTrackList(currentTracks, currentTab === 'playlists' && activePlaylistId ? 'playlist' : 'normal');
-  }
-
-  function updatePlayIcon(isPlaying) {
-    if (isPlaying) {
-      playIcon.innerHTML = `<path d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5zm5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5z"/>`;
-    } else {
-      playIcon.innerHTML = `<path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>`;
-    }
-  }
-
-  function nextSong() {
-    if (currentTracks.length === 0) return;
-    if (currentTrackIndex < currentTracks.length - 1) playTrack(currentTrackIndex + 1, currentTracks);
-    else playTrack(0, currentTracks);
-  }
-
-  function prevSong() {
-    if (currentTracks.length === 0) return;
-    if (currentTrackIndex > 0) playTrack(currentTrackIndex - 1, currentTracks);
-    else playTrack(currentTracks.length - 1, currentTracks);
-  }
-
-  audioPlayer.addEventListener('timeupdate', () => {
-    if (audioPlayer.duration) {
-      seekBar.value = (audioPlayer.currentTime / audioPlayer.duration) * 100;
-      currentTimeEl.textContent = formatTime(audioPlayer.currentTime);
-      totalTimeEl.textContent = formatTime(audioPlayer.duration);
-    }
-  });
-
-  seekBar.addEventListener('input', () => {
-    if (audioPlayer.duration) audioPlayer.currentTime = (seekBar.value / 100) * audioPlayer.duration;
-  });
-
-  function formatTime(seconds) {
-    const min = Math.floor(seconds / 60);
-    const sec = Math.floor(seconds % 60);
-    return `${min}:${sec < 10 ? '0' : ''}${sec}`;
-  }
-
-  audioPlayer.addEventListener('ended', () => nextSong());
-
-  // ---------- Favorites ----------
-  function toggleFavorite(song) {
-    const idx = favoritesList.findIndex(f => f.id === song.id);
-    if (idx > -1) favoritesList.splice(idx, 1);
-    else favoritesList.push(song);
-    saveFavorites();
-    if (currentTab === 'favs') renderFavorites();
-  }
-
-  function renderFavorites() {
-    if (favoritesList.length === 0) {
-      resultsList.innerHTML = '<div class="empty-state">No favorite songs yet.<br>Tap 🤍 on any track to save it here.</div>';
-      return;
-    }
-    renderTrackList(favoritesList, 'normal');
-  }
-
-  // ---------- Playlists ----------
-  function renderPlaylistGrid() {
-    document.getElementById('playlists-list-view').style.display = 'block';
-    document.getElementById('playlist-detail-view').style.display = 'none';
-    resultsList.style.display = 'none';
-
-    const grid = document.getElementById('playlist-grid');
-    if (playlists.length === 0) {
-      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">No playlists yet.<br>Create one above to get started.</div>';
-      return;
-    }
-    grid.innerHTML = '';
-    playlists.forEach(pl => {
-      const card = document.createElement('div');
-      card.className = 'playlist-card';
-      card.innerHTML = `
-        <button class="pl-delete" title="Delete playlist">🗑</button>
-        <div class="pl-icon"><svg fill="currentColor" viewBox="0 0 16 16"><path d="M6 13c0 1.105-1.12 2-2.5 2S1 14.105 1 13s1.12-2 2.5-2 2.5.895 2.5 2zm9-2c0 1.105-1.12 2-2.5 2s-2.5-.895-2.5-2 1.12-2 2.5-2 2.5.895 2.5 2z"/><path fill-rule="evenodd" d="M14 11V2h1v9h-1zM6 3v10H5V3h1z"/><path d="M5 2.905a1 1 0 0 1 .9-.995l8-.8a1 1 0 0 1 1.1.995V3l-9 .9V2.905z"/></svg></div>
-        <div class="pl-name">${pl.name}</div>
-        <div class="pl-count">${pl.tracks.length} song${pl.tracks.length === 1 ? '' : 's'}</div>
-      `;
-      card.addEventListener('click', () => openPlaylistDetail(pl.id));
-      card.querySelector('.pl-delete').addEventListener('click', (e) => {
-        e.stopPropagation();
-        deletePlaylist(pl.id);
-      });
-      grid.appendChild(card);
-    });
-  }
-
-  function createPlaylist(name) {
-    const trimmed = name.trim();
-    if (!trimmed) return null;
-    const pl = { id: 'pl_' + Date.now() + Math.random().toString(36).slice(2, 6), name: trimmed, tracks: [] };
-    playlists.push(pl);
-    savePlaylists();
-    return pl;
-  }
-
-  document.getElementById('create-playlist-btn').addEventListener('click', () => {
-    const input = document.getElementById('new-playlist-input');
-    if (createPlaylist(input.value)) { input.value = ''; renderPlaylistGrid(); }
-  });
-  document.getElementById('new-playlist-input').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') document.getElementById('create-playlist-btn').click();
-  });
-
-  function deletePlaylist(id) {
-    playlists = playlists.filter(p => p.id !== id);
-    savePlaylists();
-    renderPlaylistGrid();
-  }
-
-  function openPlaylistDetail(id) {
-    activePlaylistId = id;
-    const pl = playlists.find(p => p.id === id);
-    if (!pl) return;
-    document.getElementById('playlists-list-view').style.display = 'none';
-    document.getElementById('playlist-detail-view').style.display = 'block';
-    document.getElementById('playlist-detail-title').textContent = pl.name;
-    document.getElementById('playlist-detail-sub').textContent = `${pl.tracks.length} song${pl.tracks.length === 1 ? '' : 's'}`;
-    resultsList.style.display = 'block';
-    renderTrackList(pl.tracks, 'playlist');
-  }
-
-  function closePlaylistDetail() {
-    activePlaylistId = null;
-    document.getElementById('playlists-list-view').style.display = 'block';
-    document.getElementById('playlist-detail-view').style.display = 'none';
-    resultsList.style.display = 'none';
-  }
-
-  function removeFromPlaylist(playlistId, trackId) {
-    const pl = playlists.find(p => p.id === playlistId);
-    if (!pl) return;
-    pl.tracks = pl.tracks.filter(t => t.id !== trackId);
-    savePlaylists();
-    document.getElementById('playlist-detail-sub').textContent = `${pl.tracks.length} song${pl.tracks.length === 1 ? '' : 's'}`;
-    renderTrackList(pl.tracks, 'playlist');
-  }
-
-  function addTrackToPlaylist(playlistId, track) {
-    const pl = playlists.find(p => p.id === playlistId);
-    if (!pl) return false;
-    if (pl.tracks.some(t => t.id === track.id)) return false;
-    pl.tracks.push(track);
-    savePlaylists();
-    return true;
-  }
-
-  // ---------- Add-to-playlist modal ----------
-  const modalOverlay = document.getElementById('modal-overlay');
-  const modalPlaylistList = document.getElementById('modal-playlist-list');
-  const modalTrackTitle = document.getElementById('modal-track-title');
-  const modalTrackArtist = document.getElementById('modal-track-artist');
-  const modalNewPlaylistInput = document.getElementById('modal-new-playlist-input');
-
-  function openAddToPlaylistModal(track) {
-    modalTrack = track;
-    modalTrackTitle.textContent = `Add "${track.title}"`;
-    modalTrackArtist.textContent = track.artist;
-    modalNewPlaylistInput.value = '';
-    renderModalPlaylistList();
-    modalOverlay.classList.add('show');
-  }
-
-  function renderModalPlaylistList() {
-    if (playlists.length === 0) {
-      modalPlaylistList.innerHTML = '<div class="empty-state">No playlists yet. Create one above.</div>';
-      return;
-    }
-    modalPlaylistList.innerHTML = '';
-    playlists.forEach(pl => {
-      const already = pl.tracks.some(t => t.id === modalTrack.id);
-      const item = document.createElement('div');
-      item.className = 'modal-playlist-item';
-      item.innerHTML = `<span>${pl.name} <span style="color:var(--text-muted); font-weight:400;">(${pl.tracks.length})</span></span><span class="added-check">${already ? '✓ Added' : '+ Add'}</span>`;
-      item.addEventListener('click', () => {
-        if (already) { removeFromPlaylist(pl.id, modalTrack.id); }
-        else { addTrackToPlaylist(pl.id, modalTrack); }
-        renderModalPlaylistList();
-        if (currentTab === 'playlists' && activePlaylistId) {
-          const activePl = playlists.find(p => p.id === activePlaylistId);
-          if (activePl) renderTrackList(activePl.tracks, 'playlist');
-        }
-      });
-      modalPlaylistList.appendChild(item);
-    });
-  }
-
-  document.getElementById('modal-create-btn').addEventListener('click', () => {
-    const pl = createPlaylist(modalNewPlaylistInput.value);
-    if (pl && modalTrack) {
-      addTrackToPlaylist(pl.id, modalTrack);
-      modalNewPlaylistInput.value = '';
-      renderModalPlaylistList();
-    }
-  });
-  modalNewPlaylistInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') document.getElementById('modal-create-btn').click();
-  });
-
-  document.getElementById('modal-close-btn').addEventListener('click', () => modalOverlay.classList.remove('show'));
-  modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) modalOverlay.classList.remove('show'); });
-
-  // ---------- Search actions ----------
-  searchBtn.addEventListener('click', () => fetchHindiSongs(searchInput.value.trim()));
-  searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') fetchHindiSongs(searchInput.value.trim()); });
-</script>
-
+<script src="script.js" defer></script>
 </body>
 </html>
